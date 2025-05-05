@@ -15,7 +15,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   int _categoryIndex = 0;
   int _bottomIndex = 0;
   bool _isWriteMenuOpen = false;
-  final List<String> categories = ['전체', '묵상나눔', '기도제목', '신앙고민', '교회추천'];
+  final List<String> categories = ['전체', '오목완', '말씀나눔', '기도제목', '고민', '교회추천'];
   final ApiService _apiService = ApiService();
   final ScrollController _scrollController = ScrollController();
   DateTime? _lastApiCallTime;
@@ -180,14 +180,16 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
   Color _categoryColor(String category) {
     switch (category) {
-      case '묵상나눔':
+      case '오목완':
         return const Color(0xFFB3C7F7); // 하늘색
-      case '기도제목':
+      case '말씀나눔':
         return const Color(0xFFD1B3F7); // 연보라
-      case '신앙고민':
+      case '기도제목':
         return const Color(0xFFB3F7E0); // 민트
-      case '교회추천':
+      case '고민':
         return const Color(0xFFF7E6B3); // 연노랑
+      case '교회추천':
+        return const Color(0xFFF7B3B3); // 연빨강
       default:
         return const Color(0xFFF2F2F7);
     }

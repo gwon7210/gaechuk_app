@@ -34,7 +34,7 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
         '/posts',
         body: {
           'content': _contentController.text.trim(),
-          'post_type': 'omukwan',
+          'post_type': '오목완',
         },
       );
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class WritePostScreen extends StatefulWidget {
   const WritePostScreen({Key? key}) : super(key: key);
@@ -10,15 +11,54 @@ class WritePostScreen extends StatefulWidget {
 class _WritePostScreenState extends State<WritePostScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  String _selectedCategory = '묵상나눔';
+  String _selectedCategory = '말씀나눔';
+  final ApiService _apiService = ApiService();
+  bool _isLoading = false;
 
-  final List<String> categories = ['묵상나눔', '기도제목', '신앙고민', '교회추천'];
+  final List<String> categories = ['전체', '오목완', '말씀나눔', '기도제목', '고민', '교회추천'];
 
   @override
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitPost() async {
+    if (_contentController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('내용을 입력해주세요')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await _apiService.post(
+        '/posts',
+        body: {
+          'content': _contentController.text.trim(),
+          'post_type': _selectedCategory,
+          if (_titleController.text.trim().isNotEmpty)
+            'title': _titleController.text.trim(),
+        },
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -46,18 +86,25 @@ class _WritePostScreenState extends State<WritePostScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              // TODO: 글 저장 로직 구현
-              Navigator.pop(context);
-            },
-            child: const Text(
-              '완료',
-              style: TextStyle(
-                color: Color(0xFF007AFF),
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            onPressed: _isLoading ? null : _submitPost,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF007AFF)),
+                    ),
+                  )
+                : const Text(
+                    '완료',
+                    style: TextStyle(
+                      color: Color(0xFF007AFF),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ],
       ),
