@@ -92,10 +92,11 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         final Map<String, dynamic> meta = response['meta'];
 
         final processedPosts = newPosts.map((post) {
-          print('Processing post: $post');
+          final user = post['user'] ?? {};
           return {
             'profileColor': Colors.blue,
-            'nickname': post['user']['nickname'] ?? '',
+            'nickname': user['nickname'] ?? '',
+            'profile_image_url': user['profile_image_url'],
             'time': _formatTime(post['created_at']),
             'category': post['post_type'] ?? '',
             'content': post['content'] ?? '',
@@ -381,6 +382,12 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     final lines = content.split('\n');
     final preview = expanded ? content : lines.take(3).join('\n');
     final isLong = lines.length > 3;
+    String? profileImageUrl = post['profile_image_url'];
+    if (profileImageUrl != null &&
+        profileImageUrl.isNotEmpty &&
+        profileImageUrl.startsWith('/')) {
+      profileImageUrl = ApiService.baseUrl + profileImageUrl;
+    }
 
     return Card(
       key: ValueKey('post_$idx'),
@@ -397,11 +404,17 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  backgroundColor: post['profileColor'],
-                  child: const Icon(Icons.person, color: Colors.white),
-                  radius: 20,
-                ),
+                profileImageUrl != null && profileImageUrl.isNotEmpty
+                    ? CircleAvatar(
+                        backgroundColor: post['profileColor'],
+                        backgroundImage: NetworkImage(profileImageUrl),
+                        radius: 20,
+                      )
+                    : CircleAvatar(
+                        backgroundColor: post['profileColor'],
+                        child: const Icon(Icons.person, color: Colors.white),
+                        radius: 20,
+                      ),
                 const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
