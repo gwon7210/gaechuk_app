@@ -85,6 +85,43 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> postWithImage(
+    String path, {
+    required Map<String, dynamic> fields,
+    required Map<String, http.MultipartFile> files,
+  }) async {
+    final url = '$baseUrl$path';
+    final request = http.MultipartRequest('POST', Uri.parse(url));
+
+    // 헤더 추가
+    request.headers.addAll(_headers);
+    request.headers
+        .remove('Content-Type'); // multipart 요청에서는 Content-Type을 자동으로 설정
+
+    // 필드 추가
+    fields.forEach((key, value) {
+      request.fields[key] = value.toString();
+    });
+
+    // 파일 추가
+    files.forEach((key, file) {
+      request.files.add(file);
+    });
+
+    _logRequest('POST', url, request.headers, fields.toString());
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    _logResponse(response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('요청에 실패했습니다.');
+    }
+  }
+
   Future<Map<String, dynamic>> get(String path,
       {Map<String, dynamic>? queryParams}) async {
     final url =

@@ -101,6 +101,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             'likes': ((post['likes'] as List?)?.length ?? 0).toString(),
             'comments': '0',
             'expanded': false,
+            'image_url': post['image_url'],
           };
         }).toList();
 
@@ -364,6 +365,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     final post = posts[idx];
     final bool expanded = post['expanded'] as bool;
     final String content = post['content'] as String;
+    final String? imageUrl = post['image_url'] as String?;
     final lines = content.split('\n');
     final preview = expanded ? content : lines.take(3).join('\n');
     final isLong = lines.length > 3;
@@ -460,6 +462,33 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   ),
                 ),
               ),
+            if (imageUrl != null) ...[
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  'http://10.0.2.2:3000$imageUrl',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 200,
+                  errorBuilder: (context, error, stackTrace) {
+                    print('Image loading error: $error');
+                    return Container(
+                      width: double.infinity,
+                      height: 200,
+                      color: const Color(0xFFF2F2F7),
+                      child: const Center(
+                        child: Icon(
+                          Icons.error_outline,
+                          color: Color(0xFF8E8E93),
+                          size: 32,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
             Row(
               children: [

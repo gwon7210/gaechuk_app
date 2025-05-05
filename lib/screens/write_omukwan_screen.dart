@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 
 class WriteOmukwanScreen extends StatefulWidget {
   const WriteOmukwanScreen({Key? key}) : super(key: key);
@@ -12,11 +15,28 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
   final TextEditingController _contentController = TextEditingController();
   final ApiService _apiService = ApiService();
   bool _isLoading = false;
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
     _contentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('이미지를 선택하는데 실패했습니다: $e')),
+      );
+    }
   }
 
   Future<void> _submitPost() async {
@@ -30,12 +50,21 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await _apiService.post(
+      final fields = {
+        'content': _contentController.text.trim(),
+        'post_type': '오목완',
+      };
+      final files = <String, http.MultipartFile>{};
+
+      if (_selectedImage != null) {
+        files['image'] =
+            await http.MultipartFile.fromPath('image', _selectedImage!.path);
+      }
+
+      await _apiService.postWithImage(
         '/posts',
-        body: {
-          'content': _contentController.text.trim(),
-          'post_type': '오목완',
-        },
+        fields: fields,
+        files: files,
       );
 
       if (mounted) {
@@ -101,59 +130,63 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F7),
-                  borderRadius: BorderRadius.circular(12),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2F2F7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TextField(
+                controller: _contentController,
+                maxLines: 15,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF1C1C1E),
+                  letterSpacing: -0.3,
+                  height: 1.5,
                 ),
-                child: TextField(
-                  controller: _contentController,
-                  maxLines: 15,
-                  style: const TextStyle(
+                decoration: const InputDecoration(
+                  hintText: '오늘 말씀은 어땠나요?',
+                  hintStyle: TextStyle(
+                    color: Color(0xFF8E8E93),
                     fontSize: 16,
-                    color: Color(0xFF1C1C1E),
                     letterSpacing: -0.3,
-                    height: 1.5,
                   ),
-                  decoration: const InputDecoration(
-                    hintText: '오늘 말씀은 어땠나요?',
-                    hintStyle: TextStyle(
-                      color: Color(0xFF8E8E93),
-                      fontSize: 16,
-                      letterSpacing: -0.3,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: _pickImage,
+                  icon: const Icon(
+                    Icons.image_outlined,
+                    color: Color(0xFF007AFF),
+                    size: 24,
+                  ),
+                ),
+                if (_selectedImage != null) ...[
+                  const SizedBox(width: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      _selectedImage!,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
                     ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(16),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFB3C7F7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  '오묵완',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF4B4B5B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
+                ],
+              ],
+            ),
+          ],
         ),
       ),
     );
