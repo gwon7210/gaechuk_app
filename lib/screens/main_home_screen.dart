@@ -3,6 +3,7 @@ import 'write_post_screen.dart';
 import 'write_omukwan_screen.dart';
 import '../services/api_service.dart';
 import 'dart:async';
+import 'profile_screen.dart';
 
 class MainHomeScreen extends StatefulWidget {
   const MainHomeScreen({Key? key}) : super(key: key);
@@ -198,135 +199,146 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Widget body;
+    if (_bottomIndex == 0) {
+      body = Column(
+        children: [
+          // 카테고리 탭
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: SizedBox(
+              height: 32,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: categories.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 6),
+                itemBuilder: (context, idx) =>
+                    _buildCategoryTab(categories[idx], idx),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFE5E5EA)),
+          // 게시글 리스트
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () => _loadPosts(refresh: true),
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.only(top: 24, bottom: 24),
+                itemCount: posts.length + 1,
+                itemBuilder: (context, idx) {
+                  if (idx == posts.length) {
+                    return _buildLoadingIndicator();
+                  }
+                  return _buildPostCard(idx);
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    } else if (_bottomIndex == 2) {
+      body = const ProfileScreen();
+    } else {
+      body = const Center(child: Text('소모임(추후 구현)'));
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 카테고리 탭
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: SizedBox(
-                height: 32,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
-                  itemBuilder: (context, idx) =>
-                      _buildCategoryTab(categories[idx], idx),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Divider(height: 1, thickness: 1, color: Color(0xFFE5E5EA)),
-            // 게시글 리스트
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => _loadPosts(refresh: true),
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.only(top: 24, bottom: 24),
-                  itemCount: posts.length + 1,
-                  itemBuilder: (context, idx) {
-                    if (idx == posts.length) {
-                      return _buildLoadingIndicator();
-                    }
-                    return _buildPostCard(idx);
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: SafeArea(child: body),
       bottomNavigationBar: _buildBottomBar(),
-      floatingActionButton: Container(
-        height: 240,
-        width: 72,
-        child: Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            if (_isWriteMenuOpen) ...[
-              Positioned(
-                bottom: 160,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: _isWriteMenuOpen ? 1.0 : 0.0,
-                  child: FloatingActionButton(
-                    heroTag: 'omukwan',
-                    onPressed: () {
-                      setState(() => _isWriteMenuOpen = false);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const WriteOmukwanScreen()),
-                      ).then((_) {
-                        if (mounted) {
-                          _loadPosts(refresh: true);
-                        }
-                      });
-                    },
-                    backgroundColor: const Color(0xFF7BA7F7),
-                    child: const Text(
-                      '오묵완',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+      floatingActionButton: _bottomIndex == 0
+          ? Container(
+              height: 240,
+              width: 72,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  if (_isWriteMenuOpen) ...[
+                    Positioned(
+                      bottom: 160,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: _isWriteMenuOpen ? 1.0 : 0.0,
+                        child: FloatingActionButton(
+                          heroTag: 'omukwan',
+                          onPressed: () {
+                            setState(() => _isWriteMenuOpen = false);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const WriteOmukwanScreen()),
+                            ).then((_) {
+                              if (mounted) {
+                                _loadPosts(refresh: true);
+                              }
+                            });
+                          },
+                          backgroundColor: const Color(0xFF7BA7F7),
+                          child: const Text(
+                            '오묵완',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 88,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: _isWriteMenuOpen ? 1.0 : 0.0,
+                        child: FloatingActionButton(
+                          heroTag: 'post',
+                          onPressed: () {
+                            setState(() => _isWriteMenuOpen = false);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const WritePostScreen()),
+                            );
+                          },
+                          backgroundColor: const Color(0xFF7BA7F7),
+                          child: const Text(
+                            '게시글',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  Positioned(
+                    bottom: 0,
+                    child: AnimatedRotation(
+                      duration: const Duration(milliseconds: 200),
+                      turns: _isWriteMenuOpen ? 0.125 : 0,
+                      child: FloatingActionButton(
+                        heroTag: 'toggle',
+                        onPressed: () {
+                          setState(() => _isWriteMenuOpen = !_isWriteMenuOpen);
+                        },
+                        backgroundColor: const Color(0xFF7BA7F7),
+                        child: Icon(
+                          _isWriteMenuOpen ? Icons.close : Icons.edit,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-              Positioned(
-                bottom: 88,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: _isWriteMenuOpen ? 1.0 : 0.0,
-                  child: FloatingActionButton(
-                    heroTag: 'post',
-                    onPressed: () {
-                      setState(() => _isWriteMenuOpen = false);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const WritePostScreen()),
-                      );
-                    },
-                    backgroundColor: const Color(0xFF7BA7F7),
-                    child: const Text(
-                      '게시글',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-            Positioned(
-              bottom: 0,
-              child: AnimatedRotation(
-                duration: const Duration(milliseconds: 200),
-                turns: _isWriteMenuOpen ? 0.125 : 0,
-                child: FloatingActionButton(
-                  heroTag: 'toggle',
-                  onPressed: () {
-                    setState(() => _isWriteMenuOpen = !_isWriteMenuOpen);
-                  },
-                  backgroundColor: const Color(0xFF7BA7F7),
-                  child: Icon(
-                    _isWriteMenuOpen ? Icons.close : Icons.edit,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+            )
+          : null,
     );
   }
 
@@ -586,7 +598,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
       ],
       currentIndex: _bottomIndex,
-      onTap: (idx) => setState(() => _bottomIndex = idx),
+      onTap: (idx) {
+        setState(() => _bottomIndex = idx);
+      },
       elevation: 8,
     );
   }
