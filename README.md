@@ -1,4 +1,4 @@
-# 개축 앱 (Gaechuk App)
+# 개척 앱 (Gaechuk App)
 
 ## 프로젝트 소개
 개축 앱은 Flutter를 사용하여 개발된 모바일 애플리케이션입니다.
