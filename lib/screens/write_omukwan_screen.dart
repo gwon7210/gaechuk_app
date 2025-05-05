@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class WriteOmukwanScreen extends StatefulWidget {
   const WriteOmukwanScreen({Key? key}) : super(key: key);
@@ -9,11 +10,48 @@ class WriteOmukwanScreen extends StatefulWidget {
 
 class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
   final TextEditingController _contentController = TextEditingController();
+  final ApiService _apiService = ApiService();
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _contentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitPost() async {
+    if (_contentController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('내용을 입력해주세요')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await _apiService.post(
+        '/posts',
+        body: {
+          'content': _contentController.text.trim(),
+          'post_type': 'omukwan',
+        },
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -41,18 +79,25 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              // TODO: 오묵완 저장 로직 구현
-              Navigator.pop(context);
-            },
-            child: const Text(
-              '완료',
-              style: TextStyle(
-                color: Color(0xFF007AFF),
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            onPressed: _isLoading ? null : _submitPost,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF007AFF)),
+                    ),
+                  )
+                : const Text(
+                    '완료',
+                    style: TextStyle(
+                      color: Color(0xFF007AFF),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ],
       ),

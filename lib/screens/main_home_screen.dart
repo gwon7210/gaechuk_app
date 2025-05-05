@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'write_post_screen.dart';
 import 'write_omukwan_screen.dart';
+import '../services/api_service.dart';
+import 'dart:async';
 
 class MainHomeScreen extends StatefulWidget {
   const MainHomeScreen({Key? key}) : super(key: key);
@@ -14,34 +16,167 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   int _bottomIndex = 0;
   bool _isWriteMenuOpen = false;
   final List<String> categories = ['전체', '묵상나눔', '기도제목', '신앙고민', '교회추천'];
+  final ApiService _apiService = ApiService();
+  final ScrollController _scrollController = ScrollController();
+  DateTime? _lastApiCallTime;
+  static const Duration _debounceDuration = Duration(milliseconds: 500);
+  bool _isScrolling = false;
+  Timer? _scrollEndTimer;
 
-  // 샘플 게시글 데이터
-  final List<Map<String, dynamic>> posts = [
-    {
-      'profileColor': Colors.blue,
-      'nickname': '빈곤그자체',
-      'level': 1,
-      'time': '2시간 전',
-      'category': '묵상나눔',
-      'content':
-          '유연성이 좋아야 근성장?\n제가 몸이 뻣뻣합니다. 예전에는 스트레칭 자주 해주고 했는데 요즘은 거의 안해서 몸이 많이 뻣뻣합니다. 오늘 제가 며칠전부터 왼쪽 목에 뻣뻣한 느낌이 계속 있어서 불편했는데 운동 다 끝나고 프로선수 지인분에게 마사지 받았습니다. 몸이 많이 뻣뻣하다고 하시더라구요. 몸이....',
-      'likes': 0,
-      'comments': 5,
-      'expanded': false,
-    },
-    {
-      'profileColor': Colors.purple,
-      'nickname': '원뜨',
-      'level': 1,
-      'time': '4시간 전',
-      'category': '기도제목',
-      'content':
-          '휴식없이 웨이트를 계속해서 자극이 무뎌진상태라면 어찌해야합니까?\n제 가슴 자극이없고 근육통도없고 마치된것마냥 느낌이 오는 그 이유가 곰곰히 생각해보니 과거 운동 초보때 2분할을 매일할때 운동량에 욕심내서 부위당 20~25세트씩',
-      'likes': 0,
-      'comments': 0,
-      'expanded': false,
-    },
-  ];
+  List<Map<String, dynamic>> posts = [];
+  bool isLoading = false;
+  String? lastCursor;
+  bool hasMore = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    _initializeAndLoad();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _scrollEndTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!isLoading && hasMore) {
+        _scrollEndTimer?.cancel();
+        _scrollEndTimer = Timer(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            _loadPosts();
+          }
+        });
+      }
+    }
+  }
+
+  Future<void> _loadPosts({bool refresh = false}) async {
+    if (isLoading || (!refresh && !hasMore)) return;
+
+    setState(() {
+      isLoading = true;
+      if (refresh) {
+        lastCursor = null;
+        posts = [];
+        hasMore = true;
+      }
+    });
+
+    // 로딩 상태를 좀 더 오래 보여주기 위한 지연
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    try {
+      print(
+          'Attempting to load posts - Cursor: $lastCursor, Category: ${_categoryIndex == 0 ? 'all' : categories[_categoryIndex]}');
+
+      final response = await _apiService.getPosts(
+        cursor: lastCursor,
+        limit: 3,
+        postType: _categoryIndex == 0 ? null : categories[_categoryIndex],
+      );
+
+      if (!mounted) return;
+
+      print('Posts loaded successfully: ${response.toString()}');
+
+      try {
+        print('API Response: $response');
+        final List<dynamic> newPosts = response['posts'];
+        final Map<String, dynamic> meta = response['meta'];
+
+        final processedPosts = newPosts.map((post) {
+          print('Processing post: $post');
+          return {
+            'profileColor': Colors.blue,
+            'nickname': post['user']['nickname'] ?? '',
+            'time': _formatTime(post['created_at']),
+            'category': post['post_type'] ?? '',
+            'content': post['content'] ?? '',
+            'likes': ((post['likes'] as List?)?.length ?? 0).toString(),
+            'comments': '0',
+            'expanded': false,
+          };
+        }).toList();
+
+        if (!mounted) return;
+
+        setState(() {
+          posts.addAll(processedPosts);
+          lastCursor = meta['nextCursor'];
+          hasMore = meta['hasNextPage'] ?? false;
+          isLoading = false;
+        });
+      } catch (e, stackTrace) {
+        print('Error processing posts: $e');
+        print('Stack trace: $stackTrace');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('게시물을 불러오는데 실패했습니다: $e')),
+          );
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('게시물을 불러오는데 실패했습니다: $e')),
+        );
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _initializeServices() async {
+    try {
+      print('Initializing ApiService...');
+      await _apiService.initialize();
+      print('ApiService initialized successfully');
+    } catch (e) {
+      print('Failed to initialize ApiService: $e');
+    }
+  }
+
+  Future<void> _initializeAndLoad() async {
+    try {
+      print('Starting initialization and loading...');
+      await _initializeServices();
+      await _loadPosts();
+      print('Initialization and loading completed');
+    } catch (e) {
+      print('Error during initialization and loading: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('초기화 중 오류가 발생했습니다: $e')),
+        );
+      }
+    }
+  }
+
+  String _formatTime(String dateStr) {
+    final date = DateTime.parse(dateStr);
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}일 전';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}시간 전';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}분 전';
+    } else {
+      return '방금 전';
+    }
+  }
 
   Color _categoryColor(String category) {
     switch (category) {
@@ -83,10 +218,19 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             const Divider(height: 1, thickness: 1, color: Color(0xFFE5E5EA)),
             // 게시글 리스트
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.only(top: 24, bottom: 24),
-                itemCount: posts.length,
-                itemBuilder: (context, idx) => _buildPostCard(idx),
+              child: RefreshIndicator(
+                onRefresh: () => _loadPosts(refresh: true),
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.only(top: 24, bottom: 24),
+                  itemCount: posts.length + 1,
+                  itemBuilder: (context, idx) {
+                    if (idx == posts.length) {
+                      return _buildLoadingIndicator();
+                    }
+                    return _buildPostCard(idx);
+                  },
+                ),
               ),
             ),
           ],
@@ -179,33 +323,31 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  Widget _buildCategoryTab(String label, int index) {
-    final bool selected = _categoryIndex == index;
+  Widget _buildCategoryTab(String category, int idx) {
+    final isSelected = _categoryIndex == idx;
     return GestureDetector(
-      onTap: () => setState(() => _categoryIndex = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      onTap: () {
+        setState(() => _categoryIndex = idx);
+        _loadPosts(refresh: true);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF7BA7F7) : const Color(0xFFF2F2F7),
+          color: isSelected ? const Color(0xFF7BA7F7) : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: const Color(0x227BA7F7),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
+          border: Border.all(
+            color:
+                isSelected ? const Color(0xFF7BA7F7) : const Color(0xFFE5E5EA),
+          ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : const Color(0xFF8E8E93),
-            fontWeight: FontWeight.w600,
-            fontSize: 13.5,
-            letterSpacing: -0.2,
+        child: Center(
+          child: Text(
+            category,
+            style: TextStyle(
+              color: isSelected ? Colors.white : const Color(0xFF8E8E93),
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -217,9 +359,11 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     final bool expanded = post['expanded'] as bool;
     final String content = post['content'] as String;
     final lines = content.split('\n');
-    final preview = lines.take(3).join('\n');
+    final preview = expanded ? content : lines.take(3).join('\n');
     final isLong = lines.length > 3;
+
     return Card(
+      key: ValueKey('post_$idx'),
       margin: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
       elevation: 2,
       color: Colors.white,
@@ -249,25 +393,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                         fontSize: 15.5,
                         color: Color(0xFF3A3A4A),
                         letterSpacing: -0.2,
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 2),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF2F2F7),
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Text(
-                        '레벨 ${post['level']}',
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: Color(0xFF7BA7F7),
-                          fontWeight: FontWeight.w600,
-                        ),
                       ),
                     ),
                   ],
@@ -303,9 +428,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              expanded ? content : preview,
-              maxLines: expanded ? null : 3,
-              overflow: expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+              preview,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 15.5,
                 color: Color(0xFF23233A),
@@ -335,7 +460,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 Icon(Icons.favorite_border, size: 20, color: Color(0xFFB0B3B8)),
                 const SizedBox(width: 5),
                 Text(
-                  '${post['likes']}',
+                  post['likes'],
                   style: const TextStyle(
                     color: Color(0xFFB0B3B8),
                     fontSize: 13.5,
@@ -349,7 +474,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  '${post['comments']}',
+                  post['comments'],
                   style: const TextStyle(
                     color: Color(0xFFB0B3B8),
                     fontSize: 13.5,
@@ -361,6 +486,48 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildLoadingIndicator() {
+    if (!hasMore) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Center(
+          child: Text(
+            '더 이상 불러올 게시물이 없습니다',
+            style: TextStyle(
+              color: Color(0xFF8E8E93),
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Center(
+          child: Column(
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7BA7F7)),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '이전 게시물을 불러오는 중...',
+                style: TextStyle(
+                  color: Color(0xFF8E8E93),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 
   Widget _buildBottomBar() {

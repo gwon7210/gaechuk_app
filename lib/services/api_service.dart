@@ -6,6 +6,10 @@ class ApiService {
   static const String baseUrl = 'http://10.0.2.2:3000';
   final AuthService _authService = AuthService();
 
+  Future<void> initialize() async {
+    await _authService.init();
+  }
+
   Map<String, String> get _headers {
     final token = _authService.getToken();
     return {
@@ -57,6 +61,64 @@ class ApiService {
     } else {
       throw Exception('로그인에 실패했습니다.');
     }
+  }
+
+  Future<Map<String, dynamic>> post(String path,
+      {required Map<String, dynamic> body}) async {
+    final url = '$baseUrl$path';
+    final bodyStr = json.encode(body);
+
+    _logRequest('POST', url, _headers, bodyStr);
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: _headers,
+      body: bodyStr,
+    );
+
+    _logResponse(response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('요청에 실패했습니다.');
+    }
+  }
+
+  Future<Map<String, dynamic>> get(String path,
+      {Map<String, dynamic>? queryParams}) async {
+    final url =
+        Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
+
+    _logRequest('GET', url.toString(), _headers, null);
+
+    final response = await http.get(
+      url,
+      headers: _headers,
+    );
+
+    _logResponse(response);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('요청에 실패했습니다.');
+    }
+  }
+
+  Future<Map<String, dynamic>> getPosts({
+    String? cursor,
+    int limit = 10,
+    String? postType,
+  }) async {
+    final queryParams = <String, String>{
+      'limit': limit.toString(),
+      if (cursor != null) 'cursor': cursor,
+      if (postType != null) 'post_type': postType,
+    };
+
+    print('Calling getPosts with params: $queryParams');
+    return get('/posts', queryParams: queryParams);
   }
 
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.
