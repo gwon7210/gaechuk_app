@@ -94,16 +94,18 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         final processedPosts = newPosts.map((post) {
           final user = post['user'] ?? {};
           return {
+            'id': post['id'],
             'profileColor': Colors.blue,
             'nickname': user['nickname'] ?? '',
             'profile_image_url': user['profile_image_url'],
             'time': _formatTime(post['created_at']),
             'category': post['post_type'] ?? '',
             'content': post['content'] ?? '',
-            'likes': ((post['likes'] as List?)?.length ?? 0).toString(),
             'comments': '0',
             'expanded': false,
             'image_url': post['image_url'],
+            'liked_by_me': post['liked_by_me'] ?? false,
+            'likes_count': post['likes_count'] ?? 0,
           };
         }).toList();
 
@@ -517,13 +519,55 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             const SizedBox(height: 18),
             Row(
               children: [
-                Icon(Icons.favorite_border, size: 20, color: Color(0xFFB0B3B8)),
-                const SizedBox(width: 5),
-                Text(
-                  post['likes'],
-                  style: const TextStyle(
-                    color: Color(0xFFB0B3B8),
-                    fontSize: 13.5,
+                GestureDetector(
+                  onTap: () async {
+                    try {
+                      if (post['liked_by_me']) {
+                        await _apiService.unlikePost(post['id']);
+                        setState(() {
+                          post['liked_by_me'] = false;
+                          post['likes_count'] =
+                              (post['likes_count'] as int) - 1;
+                        });
+                      } else {
+                        await _apiService.likePost(post['id']);
+                        setState(() {
+                          post['liked_by_me'] = true;
+                          post['likes_count'] =
+                              (post['likes_count'] as int) + 1;
+                        });
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      Icon(
+                        post['liked_by_me']
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: post['liked_by_me']
+                            ? const Color(0xFF7BA7F7)
+                            : const Color(0xFFB0B3B8),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${post['likes_count'] ?? 0}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: post['liked_by_me']
+                              ? const Color(0xFF7BA7F7)
+                              : const Color(0xFFB0B3B8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 18),

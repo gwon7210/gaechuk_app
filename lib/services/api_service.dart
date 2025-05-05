@@ -182,6 +182,34 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> delete(String endpoint,
+      {Map<String, String>? queryParams}) async {
+    final url =
+        Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams);
+    print('DELETE Request to: $url');
+
+    final response = await http.delete(
+      url,
+      headers: _headers,
+    );
+
+    _logResponse(response);
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return response.body.isEmpty ? {} : json.decode(response.body);
+    } else {
+      throw Exception('요청에 실패했습니다.');
+    }
+  }
+
+  Future<void> likePost(String postId) async {
+    await post('/likes/posts/$postId', body: {});
+  }
+
+  Future<void> unlikePost(String postId) async {
+    await delete('/likes/posts/$postId');
+  }
+
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.
   // 예: 메일 목록 조회, 메일 상세 조회 등
 }
