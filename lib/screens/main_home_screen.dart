@@ -257,7 +257,11 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => const WriteOmukwanScreen()),
-                      );
+                      ).then((_) {
+                        if (mounted) {
+                          _loadPosts(refresh: true);
+                        }
+                      });
                     },
                     backgroundColor: const Color(0xFF7BA7F7),
                     child: const Text(
