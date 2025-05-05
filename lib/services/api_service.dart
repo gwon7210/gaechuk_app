@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'auth_service.dart';
+import 'dart:io';
 
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:3000';
@@ -156,6 +157,29 @@ class ApiService {
 
     print('Calling getPosts with params: $queryParams');
     return get('/posts', queryParams: queryParams);
+  }
+
+  Future<Map<String, dynamic>> getMe() async {
+    return get('/users/me');
+  }
+
+  Future<Map<String, dynamic>> uploadProfileImage(File imageFile) async {
+    final url = '$baseUrl/users/profile-image';
+    final request = http.MultipartRequest('POST', Uri.parse(url));
+    request.headers.addAll(_headers);
+    request.headers.remove('Content-Type');
+    request.files
+        .add(await http.MultipartFile.fromPath('image', imageFile.path));
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    _logResponse(response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('프로필 이미지 업로드 실패: ${response.body}');
+    }
   }
 
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.
