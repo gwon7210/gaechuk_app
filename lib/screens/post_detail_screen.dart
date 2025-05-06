@@ -347,23 +347,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.chat_bubble_outline,
-                              size: 16,
-                              color: Color(0xFF8E8E93),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${widget.post['comments']}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF8E8E93),
-                              ),
-                            ),
-                          ],
-                        ),
+                        // Row(
+                        //   children: [
+                        //     Icon(
+                        //       Icons.chat_bubble_outline,
+                        //       size: 16,
+                        //       color: Color(0xFF8E8E93),
+                        //     ),
+                        //     const SizedBox(width: 4),
+                        //     Text(
+                        //       '${widget.post['comments']}',
+                        //       style: TextStyle(
+                        //         fontSize: 13,
+                        //         color: Color(0xFF8E8E93),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
                       ],
                     ),
                   ),
@@ -372,16 +372,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 // 댓글 목록
                 if (_isLoading)
                   const Center(child: CircularProgressIndicator())
-                else if (_comments.isEmpty)
-                  const Center(
-                    child: Text(
-                      '아직 댓글이 없습니다.',
-                      style: TextStyle(
-                        color: Color(0xFF8E8E93),
-                        fontSize: 14,
-                      ),
-                    ),
-                  )
                 else ...[
                   ..._comments
                       .where((c) => c['parentId'] == null)

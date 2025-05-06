@@ -274,8 +274,8 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                               MaterialPageRoute(
                                   builder: (context) =>
                                       const WriteOmukwanScreen()),
-                            ).then((_) {
-                              if (mounted) {
+                            ).then((result) {
+                              if (mounted && result == true) {
                                 _loadPosts(refresh: true);
                               }
                             });
@@ -306,7 +306,11 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                               MaterialPageRoute(
                                   builder: (context) =>
                                       const WritePostScreen()),
-                            );
+                            ).then((result) {
+                              if (mounted && result == true) {
+                                _loadPosts(refresh: true);
+                              }
+                            });
                           },
                           backgroundColor: const Color(0xFF7BA7F7),
                           child: const Text(

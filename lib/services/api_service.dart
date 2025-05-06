@@ -117,7 +117,7 @@ class ApiService {
       request.files.add(file);
     });
 
-    _logRequest('POST', url, request.headers, fields.toString());
+    _logRequest('POST', url, request.headers, json.encode(fields));
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);

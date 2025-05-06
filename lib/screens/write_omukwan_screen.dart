@@ -68,7 +68,7 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
       );
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {

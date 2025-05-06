@@ -78,7 +78,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
       }
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
