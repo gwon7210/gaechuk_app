@@ -246,6 +246,22 @@ class ApiService {
     await delete('/comments/$commentId');
   }
 
+  Future<Map<String, dynamic>> getMyOmokwanCountByMonth(
+      int year, int month) async {
+    final response =
+        await get('/posts/my-omokwan-count-by-month?year=$year&month=$month');
+    return response as Map<String, dynamic>;
+  }
+
+  Future<List<Map<String, dynamic>>> getMyOmokwanByDate(DateTime date) async {
+    final response =
+        await get('/posts/my-omokwan-by-date?date=${date.toIso8601String()}');
+    if (response is List) {
+      return response.cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.
   // 예: 메일 목록 조회, 메일 상세 조회 등
 }

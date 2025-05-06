@@ -4,9 +4,12 @@ import 'screens/login_screen.dart';
 import 'screens/main_home_screen.dart';
 import 'screens/write_post_screen.dart';
 import 'screens/write_omukwan_screen.dart';
+import 'screens/settings_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('ko_KR', null);
   runApp(const MyApp());
 }
 
@@ -29,6 +32,7 @@ class MyApp extends StatelessWidget {
         '/mail': (context) => const MainHomeScreen(),
         '/write': (context) => const WritePostScreen(),
         '/write_omukwan': (context) => const WriteOmukwanScreen(),
+        '/settings': (context) => const SettingsScreen(),
       },
     );
   }
