@@ -30,4 +30,8 @@ class AuthService {
   bool isLoggedIn() {
     return getToken() != null;
   }
+
+  Future<void> logout() async {
+    await _prefs.remove(_tokenKey);
+  }
 }

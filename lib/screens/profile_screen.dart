@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -17,6 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -46,19 +48,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
       appBar: AppBar(
-        title: const Text('프로필'),
-        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        titleTextStyle: const TextStyle(
-          color: Color(0xFF1C1C1E),
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
+        title: const Text(
+          '프로필',
+          style: TextStyle(
+            color: Color(0xFF1C1C1E),
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              try {
+                await _authService.logout();
+                if (mounted) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/',
+                    (route) => false,
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('로그아웃 중 오류가 발생했습니다: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text(
+              '로그아웃',
+              style: TextStyle(
+                color: Color(0xFF7BA7F7),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
-      backgroundColor: Colors.white,
       body: FutureBuilder<Map<String, dynamic>>(
         future: _userFuture,
         builder: (context, snapshot) {

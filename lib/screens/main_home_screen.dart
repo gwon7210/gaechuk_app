@@ -4,6 +4,7 @@ import 'write_omukwan_screen.dart';
 import '../services/api_service.dart';
 import 'dart:async';
 import 'profile_screen.dart';
+import 'post_detail_screen.dart';
 
 class MainHomeScreen extends StatefulWidget {
   const MainHomeScreen({Key? key}) : super(key: key);
@@ -391,202 +392,212 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       profileImageUrl = ApiService.baseUrl + profileImageUrl;
     }
 
-    return Card(
-      key: ValueKey('post_$idx'),
-      margin: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-      elevation: 2,
-      color: Colors.white,
-      shadowColor: const Color(0x1A7BA7F7),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                profileImageUrl != null && profileImageUrl.isNotEmpty
-                    ? CircleAvatar(
-                        backgroundColor: post['profileColor'],
-                        backgroundImage: NetworkImage(profileImageUrl),
-                        radius: 20,
-                      )
-                    : CircleAvatar(
-                        backgroundColor: post['profileColor'],
-                        child: const Icon(Icons.person, color: Colors.white),
-                        radius: 20,
-                      ),
-                const SizedBox(width: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      post['nickname'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15.5,
-                        color: Color(0xFF3A3A4A),
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Text(
-                  post['time'],
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFB0B3B8),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _categoryColor(post['category']),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    post['category'],
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF4B4B5B),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              preview,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 15.5,
-                color: Color(0xFF23233A),
-                height: 1.7,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -0.1,
-              ),
-            ),
-            if (isLong && !expanded)
-              GestureDetector(
-                onTap: () => setState(() => posts[idx]['expanded'] = true),
-                child: const Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Text(
-                    '더보기',
-                    style: TextStyle(
-                      color: Color(0xFF7BA7F7),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            if (imageUrl != null) ...[
-              const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  'http://10.0.2.2:3000$imageUrl',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: 200,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('Image loading error: $error');
-                    return Container(
-                      width: double.infinity,
-                      height: 200,
-                      color: const Color(0xFFF2F2F7),
-                      child: const Center(
-                        child: Icon(
-                          Icons.error_outline,
-                          color: Color(0xFF8E8E93),
-                          size: 32,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PostDetailScreen(post: post),
+          ),
+        );
+      },
+      child: Card(
+        key: ValueKey('post_$idx'),
+        margin: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        elevation: 2,
+        color: Colors.white,
+        shadowColor: const Color(0x1A7BA7F7),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  profileImageUrl != null && profileImageUrl.isNotEmpty
+                      ? CircleAvatar(
+                          backgroundColor: post['profileColor'],
+                          backgroundImage: NetworkImage(profileImageUrl),
+                          radius: 20,
+                        )
+                      : CircleAvatar(
+                          backgroundColor: post['profileColor'],
+                          child: const Icon(Icons.person, color: Colors.white),
+                          radius: 20,
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () async {
-                    try {
-                      if (post['liked_by_me']) {
-                        await _apiService.unlikePost(post['id']);
-                        setState(() {
-                          post['liked_by_me'] = false;
-                          post['likes_count'] =
-                              (post['likes_count'] as int) - 1;
-                        });
-                      } else {
-                        await _apiService.likePost(post['id']);
-                        setState(() {
-                          post['liked_by_me'] = true;
-                          post['likes_count'] =
-                              (post['likes_count'] as int) + 1;
-                        });
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다: $e')),
-                        );
-                      }
-                    }
-                  },
-                  child: Row(
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        post['liked_by_me']
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color: post['liked_by_me']
-                            ? const Color(0xFF7BA7F7)
-                            : const Color(0xFFB0B3B8),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 4),
                       Text(
-                        '${post['likes_count'] ?? 0}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: post['liked_by_me']
-                              ? const Color(0xFF7BA7F7)
-                              : const Color(0xFFB0B3B8),
-                          fontWeight: FontWeight.w500,
+                        post['nickname'],
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15.5,
+                          color: Color(0xFF3A3A4A),
+                          letterSpacing: -0.2,
                         ),
                       ),
                     ],
                   ),
+                  const Spacer(),
+                  Text(
+                    post['time'],
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFFB0B3B8),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _categoryColor(post['category']),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      post['category'],
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF4B4B5B),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                preview,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15.5,
+                  color: Color(0xFF23233A),
+                  height: 1.7,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.1,
                 ),
-                const SizedBox(width: 18),
-                Icon(
-                  Icons.mode_comment_outlined,
-                  size: 20,
-                  color: Color(0xFFB0B3B8),
+              ),
+              if (isLong && !expanded)
+                GestureDetector(
+                  onTap: () => setState(() => posts[idx]['expanded'] = true),
+                  child: const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      '더보기',
+                      style: TextStyle(
+                        color: Color(0xFF7BA7F7),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 5),
-                Text(
-                  post['comments'],
-                  style: const TextStyle(
-                    color: Color(0xFFB0B3B8),
-                    fontSize: 13.5,
+              if (imageUrl != null) ...[
+                const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    'http://10.0.2.2:3000$imageUrl',
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 200,
+                    errorBuilder: (context, error, stackTrace) {
+                      print('Image loading error: $error');
+                      return Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: const Color(0xFFF2F2F7),
+                        child: const Center(
+                          child: Icon(
+                            Icons.error_outline,
+                            color: Color(0xFF8E8E93),
+                            size: 32,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
-            ),
-          ],
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () async {
+                      try {
+                        if (post['liked_by_me']) {
+                          await _apiService.unlikePost(post['id']);
+                          setState(() {
+                            post['liked_by_me'] = false;
+                            post['likes_count'] =
+                                (post['likes_count'] as int) - 1;
+                          });
+                        } else {
+                          await _apiService.likePost(post['id']);
+                          setState(() {
+                            post['liked_by_me'] = true;
+                            post['likes_count'] =
+                                (post['likes_count'] as int) + 1;
+                          });
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다: $e')),
+                          );
+                        }
+                      }
+                    },
+                    child: Row(
+                      children: [
+                        Icon(
+                          post['liked_by_me']
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: post['liked_by_me']
+                              ? const Color(0xFF7BA7F7)
+                              : const Color(0xFFB0B3B8),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${post['likes_count'] ?? 0}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: post['liked_by_me']
+                                ? const Color(0xFF7BA7F7)
+                                : const Color(0xFFB0B3B8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Icon(
+                    Icons.mode_comment_outlined,
+                    size: 20,
+                    color: Color(0xFFB0B3B8),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    post['comments'],
+                    style: const TextStyle(
+                      color: Color(0xFFB0B3B8),
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

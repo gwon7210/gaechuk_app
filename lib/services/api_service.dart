@@ -21,21 +21,29 @@ class ApiService {
 
   void _logRequest(
       String method, String url, Map<String, String> headers, String? body) {
+    final requestLog = {
+      'timestamp': DateTime.now().toIso8601String(),
+      'type': 'REQUEST',
+      'method': method,
+      'url': url,
+      'headers': headers,
+      if (body != null) 'body': json.decode(body),
+    };
     print('=== API Request ===');
-    print('Method: $method');
-    print('URL: $url');
-    print('Headers: $headers');
-    if (body != null) {
-      print('Body: $body');
-    }
+    print(const JsonEncoder.withIndent('  ').convert(requestLog));
     print('==================');
   }
 
   void _logResponse(http.Response response) {
+    final responseLog = {
+      'timestamp': DateTime.now().toIso8601String(),
+      'type': 'RESPONSE',
+      'statusCode': response.statusCode,
+      'headers': response.headers,
+      'body': response.body.isNotEmpty ? json.decode(response.body) : null,
+    };
     print('=== API Response ===');
-    print('Status Code: ${response.statusCode}');
-    print('Headers: ${response.headers}');
-    print('Body: ${response.body}');
+    print(const JsonEncoder.withIndent('  ').convert(responseLog));
     print('===================');
   }
 
@@ -123,8 +131,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> get(String path,
-      {Map<String, dynamic>? queryParams}) async {
+  Future<dynamic> get(String path, {Map<String, dynamic>? queryParams}) async {
     final url =
         Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
 
@@ -156,11 +163,12 @@ class ApiService {
     };
 
     print('Calling getPosts with params: $queryParams');
-    return get('/posts', queryParams: queryParams);
+    return await get('/posts', queryParams: queryParams)
+        as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> getMe() async {
-    return get('/users/me');
+    return await get('/users/me') as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> uploadProfileImage(File imageFile) async {
@@ -208,6 +216,34 @@ class ApiService {
 
   Future<void> unlikePost(String postId) async {
     await delete('/likes/posts/$postId');
+  }
+
+  Future<List<dynamic>> getComments(String postId) async {
+    final response = await get('/posts/$postId/comments');
+    if (response is List) {
+      return response;
+    } else if (response is Map && response['comments'] is List) {
+      return response['comments'];
+    } else {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createComment({
+    required String postId,
+    required String content,
+    String? parentId,
+  }) async {
+    final body = {
+      'postId': postId,
+      'content': content,
+      if (parentId != null) 'parentId': parentId,
+    };
+    return post('/comments', body: body);
+  }
+
+  Future<void> deleteComment(String commentId) async {
+    await delete('/comments/$commentId');
   }
 
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.
