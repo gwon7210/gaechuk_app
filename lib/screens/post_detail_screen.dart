@@ -78,7 +78,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         _replyingTo = null;
         _replyingToContent = null;
       });
-      _loadComments();
+      await _loadComments();
+
+      // 댓글 수 업데이트
+      setState(() {
+        widget.post['comments'] =
+            (int.tryParse(widget.post['comments']) ?? 0 + 1).toString();
+      });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -339,6 +345,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             color: Color(0xFF23233A),
                             height: 1.7,
                           ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 16,
+                              color: Color(0xFF8E8E93),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${widget.post['comments']}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF8E8E93),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

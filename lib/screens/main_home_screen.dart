@@ -102,7 +102,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             'time': _formatTime(post['created_at']),
             'category': post['post_type'] ?? '',
             'content': post['content'] ?? '',
-            'comments': '0',
+            'comments': post['comments_count']?.toString() ?? '0',
             'expanded': false,
             'image_url': post['image_url'],
             'liked_by_me': post['liked_by_me'] ?? false,
@@ -399,7 +399,11 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           MaterialPageRoute(
             builder: (context) => PostDetailScreen(post: post),
           ),
-        );
+        ).then((_) {
+          if (mounted) {
+            _loadPosts(refresh: true);
+          }
+        });
       },
       child: Card(
         key: ValueKey('post_$idx'),
