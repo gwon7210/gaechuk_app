@@ -5,6 +5,8 @@ import '../services/api_service.dart';
 import 'dart:async';
 import 'profile_screen.dart';
 import 'post_detail_screen.dart';
+import 'notification_screen.dart';
+import 'package:badges/badges.dart' as badges;
 
 class MainHomeScreen extends StatefulWidget {
   const MainHomeScreen({Key? key}) : super(key: key);
@@ -29,12 +31,14 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   bool isLoading = false;
   String? lastCursor;
   bool hasMore = true;
+  int _unreadNotificationCount = 0;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     _initializeAndLoad();
+    _loadUnreadNotificationCount();
   }
 
   @override
@@ -168,6 +172,17 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     }
   }
 
+  Future<void> _loadUnreadNotificationCount() async {
+    try {
+      final response = await _apiService.get('/notifications/unread-count');
+      setState(() {
+        _unreadNotificationCount = response['count'] ?? 0;
+      });
+    } catch (e) {
+      // 무시 또는 필요시 에러 처리
+    }
+  }
+
   String _formatTime(String dateStr) {
     final date = DateTime.parse(dateStr);
     final now = DateTime.now();
@@ -207,9 +222,25 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     if (_bottomIndex == 0) {
       body = Column(
         children: [
-          // 카테고리 탭
+          // 알림 아이콘
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    // TODO: 검색 기능 구현
+                  },
+                ),
+                _buildNotificationIcon(),
+              ],
+            ),
+          ),
+          // 카테고리 탭
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
             child: SizedBox(
               height: 32,
               child: ListView.separated(
@@ -401,7 +432,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PostDetailScreen(post: post),
+            builder: (context) => PostDetailScreen(postId: post['id']),
           ),
         ).then((_) {
           if (mounted) {
@@ -678,6 +709,30 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         setState(() => _bottomIndex = idx);
       },
       elevation: 8,
+    );
+  }
+
+  Widget _buildNotificationIcon() {
+    return badges.Badge(
+      showBadge: _unreadNotificationCount > 0,
+      badgeContent: Text(
+        _unreadNotificationCount.toString(),
+        style: const TextStyle(color: Colors.white, fontSize: 10),
+      ),
+      position: badges.BadgePosition.topEnd(top: -6, end: -6),
+      child: IconButton(
+        icon: const Icon(Icons.notifications_none, color: Color(0xFF7BA7F7)),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const NotificationScreen(),
+            ),
+          ).then((_) {
+            _loadUnreadNotificationCount();
+          });
+        },
+      ),
     );
   }
 }

@@ -262,6 +262,63 @@ class ApiService {
     return [];
   }
 
+  // 알림 목록 조회
+  Future<List<Map<String, dynamic>>> getNotifications() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notifications'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(json.decode(response.body));
+      } else {
+        throw Exception('Failed to get notifications');
+      }
+    } catch (e) {
+      print('Failed to get notifications: $e');
+      rethrow;
+    }
+  }
+
+  // 알림 읽음 처리
+  Future<Map<String, dynamic>> markNotificationAsRead(
+      String notificationId) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/notifications/$notificationId/read'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to mark notification as read');
+      }
+    } catch (e) {
+      print('Failed to mark notification as read: $e');
+      rethrow;
+    }
+  }
+
+  // 게시물 상세 정보 조회
+  Future<Map<String, dynamic>> getPost(String postId) async {
+    final url = '$baseUrl/posts/$postId';
+
+    _logRequest('GET', url, _headers, null);
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: _headers,
+    );
+
+    _logResponse(response);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get post');
+    }
+  }
+
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.
   // 예: 메일 목록 조회, 메일 상세 조회 등
 }
