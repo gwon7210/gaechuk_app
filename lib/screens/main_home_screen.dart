@@ -8,6 +8,7 @@ import 'post_detail_screen.dart';
 import 'notification_screen.dart';
 import 'package:badges/badges.dart' as badges;
 import 'search_screen.dart';
+import 'package:lottie/lottie.dart';
 
 class MainHomeScreen extends StatefulWidget {
   const MainHomeScreen({Key? key}) : super(key: key);
@@ -281,7 +282,62 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     } else if (_bottomIndex == 2) {
       body = const ProfileScreen();
     } else {
-      body = const Center(child: Text('소모임(추후 구현)'));
+      body = Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 32),
+                const Text(
+                  '🕊️',
+                  style: TextStyle(fontSize: 40),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  '곧, 우리를 이어줄 커뮤니티 공간이 열립니다.\n이곳에서 우리는 스크린 너머 서로를 만나,\n다양한 소모임을 통해 함께 대화할 수 있게 될 거예요. ✨',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF3A3A4A),
+                    height: 1.6,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F2F7),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(
+                        Icons.people_alt_outlined,
+                        color: Color(0xFF7BA7F7),
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        '준비 중입니다',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF7BA7F7),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
@@ -706,7 +762,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       iconSize: 26,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.groups), label: '소셜'),
-        BottomNavigationBarItem(icon: Icon(Icons.people_alt), label: '소모임'),
+        BottomNavigationBarItem(icon: Icon(Icons.people_alt), label: '커뮤니티'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
       ],
       currentIndex: _bottomIndex,
