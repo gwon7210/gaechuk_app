@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "987484724056",
+    "project_id": "gaechuk",
+    "storage_bucket": "gaechuk.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:987484724056:android:4bf1fcc4d956fb74dba32d",
+        "android_client_info": {
+          "package_name": "com.company.Ohmookwan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzucKUChmZEV-1F4usJGbqtoLD_32_Oks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:987484724056:android:6bb0cce83ad98ac9dba32d",
+        "android_client_info": {
+          "package_name": "com.example.gaechuk_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzucKUChmZEV-1F4usJGbqtoLD_32_Oks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+} 

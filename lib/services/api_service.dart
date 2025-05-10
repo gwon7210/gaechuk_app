@@ -72,6 +72,39 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> signup({
+    required String phoneNumber,
+    required String password,
+    required String nickname,
+    String? churchName,
+    String? faithConfession,
+  }) async {
+    final url = '$baseUrl/users';
+    final body = json.encode({
+      'phone_number': phoneNumber,
+      'password': password,
+      'nickname': nickname,
+      if (churchName != null) 'church_name': churchName,
+      if (faithConfession != null) 'faith_confession': faithConfession,
+    });
+
+    _logRequest('POST', url, _headers, body);
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: _headers,
+      body: body,
+    );
+
+    _logResponse(response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('회원가입에 실패했습니다.');
+    }
+  }
+
   Future<Map<String, dynamic>> post(String path,
       {required Map<String, dynamic> body}) async {
     final url = '$baseUrl$path';
