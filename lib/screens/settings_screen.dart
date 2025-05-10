@@ -45,6 +45,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _deleteProfileImage() async {
+    try {
+      setState(() => _isUploading = true);
+      await _apiService.delete('/users/profile-image');
+      setState(() {
+        _userFuture = _apiService.getMe();
+        _isUploading = false;
+      });
+    } catch (e) {
+      setState(() => _isUploading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('프로필 이미지 삭제 실패: $e')),
+        );
+      }
+    }
+  }
+
+  void _showProfileImageOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5E5EA),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.photo_library, color: Color(0xFF7BA7F7)),
+              title: const Text('앨범에서 선택'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadImage();
+              },
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.delete_outline, color: Color(0xFF7BA7F7)),
+              title: const Text('프로필 사진 삭제'),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteProfileImage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.close, color: Color(0xFF7BA7F7)),
+              title: const Text('닫기'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             bottom: 0,
                             right: 0,
                             child: GestureDetector(
-                              onTap: _pickAndUploadImage,
+                              onTap: _showProfileImageOptions,
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(

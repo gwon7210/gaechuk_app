@@ -131,9 +131,10 @@ class ApiService {
     }
   }
 
-  Future<dynamic> get(String path, {Map<String, dynamic>? queryParams}) async {
-    final url =
-        Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
+  Future<dynamic> get(String endpoint,
+      {Map<String, String>? queryParameters}) async {
+    final url = Uri.parse('$baseUrl$endpoint')
+        .replace(queryParameters: queryParameters);
 
     _logRequest('GET', url.toString(), _headers, null);
 
@@ -163,7 +164,7 @@ class ApiService {
     };
 
     print('Calling getPosts with params: $queryParams');
-    return await get('/posts', queryParams: queryParams)
+    return await get('/posts', queryParameters: queryParams)
         as Map<String, dynamic>;
   }
 
@@ -194,7 +195,8 @@ class ApiService {
       {Map<String, String>? queryParams}) async {
     final url =
         Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams);
-    print('DELETE Request to: $url');
+
+    _logRequest('DELETE', url.toString(), _headers, null);
 
     final response = await http.delete(
       url,
@@ -317,6 +319,21 @@ class ApiService {
     } else {
       throw Exception('Failed to get post');
     }
+  }
+
+  Future<Map<String, dynamic>> searchPosts({
+    required String keyword,
+    String? cursor,
+    int limit = 10,
+  }) async {
+    final queryParams = {
+      'keyword': keyword,
+      'limit': limit.toString(),
+      if (cursor != null) 'cursor': cursor,
+    };
+
+    final response = await get('/posts/search', queryParameters: queryParams);
+    return response;
   }
 
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.

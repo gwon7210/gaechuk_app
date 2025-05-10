@@ -7,6 +7,7 @@ import 'profile_screen.dart';
 import 'post_detail_screen.dart';
 import 'notification_screen.dart';
 import 'package:badges/badges.dart' as badges;
+import 'search_screen.dart';
 
 class MainHomeScreen extends StatefulWidget {
   const MainHomeScreen({Key? key}) : super(key: key);
@@ -231,7 +232,11 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () {
-                    // TODO: 검색 기능 구현
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SearchScreen()),
+                    );
                   },
                 ),
                 _buildNotificationIcon(),

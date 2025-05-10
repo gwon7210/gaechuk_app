@@ -84,6 +84,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _navigateToSettings() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+    );
+
+    if (mounted) {
+      setState(() {
+        _userFuture = _apiService.getMe();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,23 +108,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text(
           '프로필',
           style: TextStyle(
-            color: Color(0xFF1C1C1E),
+            color: Color(0xFF3A3A4A),
             fontSize: 17,
             fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.settings,
-              color: Color(0xFF1C1C1E),
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            },
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: _navigateToSettings,
           ),
         ],
       ),
