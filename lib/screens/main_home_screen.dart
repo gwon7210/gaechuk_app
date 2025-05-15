@@ -17,7 +17,8 @@ class MainHomeScreen extends StatefulWidget {
   State<MainHomeScreen> createState() => _MainHomeScreenState();
 }
 
-class _MainHomeScreenState extends State<MainHomeScreen> {
+class _MainHomeScreenState extends State<MainHomeScreen>
+    with SingleTickerProviderStateMixin {
   int _categoryIndex = 0;
   int _bottomIndex = 0;
   bool _isWriteMenuOpen = false;
@@ -28,12 +29,24 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   static const Duration _debounceDuration = Duration(milliseconds: 500);
   bool _isScrolling = false;
   Timer? _scrollEndTimer;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
 
   List<Map<String, dynamic>> posts = [];
+  List<double> likeScales = [];
   bool isLoading = false;
   String? lastCursor;
   bool hasMore = true;
   int _unreadNotificationCount = 0;
+
+  final Map<String, IconData> categoryIcons = {
+    '전체': Icons.apps,
+    '오목완': Icons.emoji_events,
+    '말씀나눔': Icons.menu_book,
+    '기도제목': Icons.self_improvement,
+    '고민': Icons.psychology_alt,
+    '교회추천': Icons.church,
+  };
 
   @override
   void initState() {
@@ -41,12 +54,25 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     _scrollController.addListener(_onScroll);
     _initializeAndLoad();
     _loadUnreadNotificationCount();
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     _scrollEndTimer?.cancel();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -73,6 +99,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         lastCursor = null;
         posts = [];
         hasMore = true;
+        likeScales = [];
       }
     });
 
@@ -123,6 +150,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           lastCursor = meta['nextCursor'];
           hasMore = meta['hasNextPage'] ?? false;
           isLoading = false;
+          likeScales.addAll(List.filled(processedPosts.length, 1.0));
         });
       } catch (e, stackTrace) {
         print('Error processing posts: $e');
@@ -224,49 +252,78 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     if (_bottomIndex == 0) {
       body = Column(
         children: [
-          // 알림 아이콘
-          Padding(
+          // 상단 앱바
+          Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SearchScreen()),
-                    );
-                  },
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '소셜',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF3A3A4A),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Material(
+                          color: Colors.transparent,
+                          shape: const CircleBorder(),
+                          child: IconButton(
+                            icon: const Icon(Icons.search_rounded,
+                                size: 28, color: Color(0xFF4B4B5B)),
+                            splashRadius: 24,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const SearchScreen()),
+                              );
+                            },
+                          ),
+                        ),
+                        _buildNotificationIcon(),
+                      ],
+                    ),
+                  ],
                 ),
-                _buildNotificationIcon(),
+                const SizedBox(height: 20),
+                // 카테고리 탭
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: SizedBox(
+                    height: 44,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.zero,
+                      itemCount: categories.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, idx) =>
+                          _buildCategoryTab(categories[idx], idx),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          // 카테고리 탭
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-            child: SizedBox(
-              height: 32,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 6),
-                itemBuilder: (context, idx) =>
-                    _buildCategoryTab(categories[idx], idx),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFE5E5EA)),
+
           // 게시글 리스트
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => _loadPosts(refresh: true),
               child: ListView.builder(
                 controller: _scrollController,
-                padding: const EdgeInsets.only(top: 24, bottom: 24),
+                padding: const EdgeInsets.only(top: 16, bottom: 24),
                 itemCount: posts.length + 1,
                 itemBuilder: (context, idx) {
                   if (idx == posts.length) {
@@ -292,7 +349,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 const SizedBox(height: 32),
                 const Text(
                   '🕊️',
-                  style: TextStyle(fontSize: 40),
+                  style: TextStyle(fontSize: 48),
                 ),
                 const SizedBox(height: 24),
                 const Text(
@@ -312,6 +369,13 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFF2F2F7),
                     borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -341,7 +405,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: Colors.white,
       body: SafeArea(child: body),
       bottomNavigationBar: _buildBottomBar(),
       floatingActionButton: _bottomIndex == 0
@@ -354,9 +418,20 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   if (_isWriteMenuOpen) ...[
                     Positioned(
                       bottom: 160,
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 200),
-                        opacity: _isWriteMenuOpen ? 1.0 : 0.0,
+                      child: TweenAnimationBuilder<double>(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutBack,
+                        tween: Tween(
+                            begin: 0.0, end: _isWriteMenuOpen ? 1.0 : 0.0),
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 50 * (1 - value)),
+                            child: Opacity(
+                              opacity: value.clamp(0.0, 1.0),
+                              child: child,
+                            ),
+                          );
+                        },
                         child: FloatingActionButton(
                           heroTag: 'omukwan',
                           onPressed: () {
@@ -386,9 +461,20 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                     ),
                     Positioned(
                       bottom: 88,
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 200),
-                        opacity: _isWriteMenuOpen ? 1.0 : 0.0,
+                      child: TweenAnimationBuilder<double>(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutBack,
+                        tween: Tween(
+                            begin: 0.0, end: _isWriteMenuOpen ? 1.0 : 0.0),
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 50 * (1 - value)),
+                            child: Opacity(
+                              opacity: value.clamp(0.0, 1.0),
+                              child: child,
+                            ),
+                          );
+                        },
                         child: FloatingActionButton(
                           heroTag: 'post',
                           onPressed: () {
@@ -419,18 +505,44 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   ],
                   Positioned(
                     bottom: 0,
-                    child: AnimatedRotation(
-                      duration: const Duration(milliseconds: 200),
-                      turns: _isWriteMenuOpen ? 0.125 : 0,
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutBack,
+                      tween:
+                          Tween(begin: 0.0, end: _isWriteMenuOpen ? 1.0 : 0.0),
+                      builder: (context, value, child) {
+                        return Transform.rotate(
+                          angle: value * 0.25 * 3.14159,
+                          child: Transform.scale(
+                            scale: 1.0 + (value * 0.1),
+                            child: child,
+                          ),
+                        );
+                      },
                       child: FloatingActionButton(
                         heroTag: 'toggle',
                         onPressed: () {
                           setState(() => _isWriteMenuOpen = !_isWriteMenuOpen);
                         },
                         backgroundColor: const Color(0xFF7BA7F7),
-                        child: Icon(
-                          _isWriteMenuOpen ? Icons.close : Icons.edit,
-                          color: Colors.white,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                            return ScaleTransition(
+                              scale: animation,
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Icon(
+                            _isWriteMenuOpen ? Icons.close : Icons.edit,
+                            key: ValueKey<String>(
+                                _isWriteMenuOpen ? 'close' : 'edit'),
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -449,25 +561,42 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         setState(() => _categoryIndex = idx);
         _loadPosts(refresh: true);
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF7BA7F7) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color:
-                isSelected ? const Color(0xFF7BA7F7) : const Color(0xFFE5E5EA),
-          ),
+          color: isSelected ? const Color(0xFF7BA7F7) : const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF7BA7F7).withOpacity(0.18),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
-        child: Center(
-          child: Text(
-            category,
-            style: TextStyle(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              categoryIcons[category] ?? Icons.category,
+              size: 17,
               color: isSelected ? Colors.white : const Color(0xFF8E8E93),
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
-          ),
+            const SizedBox(width: 6),
+            Text(
+              category,
+              style: TextStyle(
+                color: isSelected ? Colors.white : const Color(0xFF8E8E93),
+                fontSize: 13.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -475,6 +604,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
   Widget _buildPostCard(int idx) {
     final post = posts[idx];
+    final scale = likeScales.length > idx ? likeScales[idx] : 1.0;
     final bool expanded = post['expanded'] as bool;
     final String content = post['content'] as String;
     final String? imageUrl = post['image_url'] as String?;
@@ -487,6 +617,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         profileImageUrl.startsWith('/')) {
       profileImageUrl = ApiService.baseUrl + profileImageUrl;
     }
+
+    // 하트 애니메이션 상태 관리
+    final ValueNotifier<bool> likeAnim = ValueNotifier(false);
 
     return GestureDetector(
       onTap: () {
@@ -501,202 +634,279 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           }
         });
       },
-      child: Card(
-        key: ValueKey('post_$idx'),
-        margin: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-        elevation: 2,
-        color: Colors.white,
-        shadowColor: const Color(0x1A7BA7F7),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  profileImageUrl != null && profileImageUrl.isNotEmpty
-                      ? CircleAvatar(
-                          backgroundColor: post['profileColor'],
-                          backgroundImage: NetworkImage(profileImageUrl),
-                          radius: 20,
-                        )
-                      : CircleAvatar(
-                          backgroundColor: post['profileColor'],
-                          child: const Icon(Icons.person, color: Colors.white),
-                          radius: 20,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PostDetailScreen(postId: post['id']),
+                  ),
+                ).then((_) {
+                  if (mounted) {
+                    _loadPosts(refresh: true);
+                  }
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: profileImageUrl != null &&
+                                  profileImageUrl.isNotEmpty
+                              ? CircleAvatar(
+                                  backgroundColor: post['profileColor'],
+                                  backgroundImage:
+                                      NetworkImage(profileImageUrl),
+                                  radius: 24,
+                                )
+                              : CircleAvatar(
+                                  backgroundColor: post['profileColor'],
+                                  child: const Icon(Icons.person,
+                                      color: Colors.white),
+                                  radius: 24,
+                                ),
                         ),
-                  const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        post['nickname'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15.5,
-                          color: Color(0xFF3A3A4A),
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(
-                    post['time'],
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFFB0B3B8),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _categoryColor(post['category']),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      post['category'],
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF4B4B5B),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                preview,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15.5,
-                  color: Color(0xFF23233A),
-                  height: 1.7,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -0.1,
-                ),
-              ),
-              if (isLong && !expanded)
-                GestureDetector(
-                  onTap: () => setState(() => posts[idx]['expanded'] = true),
-                  child: const Padding(
-                    padding: EdgeInsets.only(top: 6),
-                    child: Text(
-                      '더보기',
-                      style: TextStyle(
-                        color: Color(0xFF7BA7F7),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              if (imageUrl != null) ...[
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    'http://10.0.2.2:3000$imageUrl',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: 200,
-                    errorBuilder: (context, error, stackTrace) {
-                      print('Image loading error: $error');
-                      return Container(
-                        width: double.infinity,
-                        height: 200,
-                        color: const Color(0xFFF2F2F7),
-                        child: const Center(
-                          child: Icon(
-                            Icons.error_outline,
-                            color: Color(0xFF8E8E93),
-                            size: 32,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                post['nickname'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Color(0xFF3A3A4A),
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                post['time'],
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFFB0B3B8),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () async {
-                      try {
-                        if (post['liked_by_me']) {
-                          await _apiService.unlikePost(post['id']);
-                          setState(() {
-                            post['liked_by_me'] = false;
-                            post['likes_count'] =
-                                (post['likes_count'] as int) - 1;
-                          });
-                        } else {
-                          await _apiService.likePost(post['id']);
-                          setState(() {
-                            post['liked_by_me'] = true;
-                            post['likes_count'] =
-                                (post['likes_count'] as int) + 1;
-                          });
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다: $e')),
-                          );
-                        }
-                      }
-                    },
-                    child: Row(
-                      children: [
-                        Icon(
-                          post['liked_by_me']
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: post['liked_by_me']
-                              ? const Color(0xFF7BA7F7)
-                              : const Color(0xFFB0B3B8),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${post['likes_count'] ?? 0}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: post['liked_by_me']
-                                ? const Color(0xFF7BA7F7)
-                                : const Color(0xFFB0B3B8),
-                            fontWeight: FontWeight.w500,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _categoryColor(post['category']),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            post['category'],
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF4B4B5B),
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 18),
-                  Icon(
-                    Icons.mode_comment_outlined,
-                    size: 20,
-                    color: Color(0xFFB0B3B8),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    post['comments'],
-                    style: const TextStyle(
-                      color: Color(0xFFB0B3B8),
-                      fontSize: 13.5,
+                    const SizedBox(height: 20),
+                    Text(
+                      preview,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF23233A),
+                        height: 1.6,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -0.1,
+                      ),
                     ),
-                  ),
-                ],
+                    if (isLong && !expanded)
+                      GestureDetector(
+                        onTap: () =>
+                            setState(() => posts[idx]['expanded'] = true),
+                        child: const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Text(
+                            '더보기',
+                            style: TextStyle(
+                              color: Color(0xFF7BA7F7),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (imageUrl != null) ...[
+                      const SizedBox(height: 20),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.network(
+                          'http://10.0.2.2:3000$imageUrl',
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: 240,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Image loading error: $error');
+                            return Container(
+                              width: double.infinity,
+                              height: 240,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF2F2F7),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: Color(0xFF8E8E93),
+                                  size: 32,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () async {
+                            try {
+                              if (post['liked_by_me']) {
+                                await _apiService.unlikePost(post['id']);
+                                setState(() {
+                                  post['liked_by_me'] = false;
+                                  post['likes_count'] =
+                                      (post['likes_count'] as int) - 1;
+                                  likeScales[idx] = 1.3;
+                                });
+                              } else {
+                                await _apiService.likePost(post['id']);
+                                setState(() {
+                                  post['liked_by_me'] = true;
+                                  post['likes_count'] =
+                                      (post['likes_count'] as int) + 1;
+                                  likeScales[idx] = 1.3;
+                                });
+                              }
+                              Future.delayed(const Duration(milliseconds: 150),
+                                  () {
+                                if (mounted)
+                                  setState(() => likeScales[idx] = 1.0);
+                              });
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text('좋아요 처리 중 오류가 발생했습니다: $e')),
+                                );
+                              }
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 8),
+                            child: AnimatedScale(
+                              scale: scale,
+                              duration: const Duration(milliseconds: 150),
+                              curve: Curves.easeOut,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    post['liked_by_me']
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: post['liked_by_me']
+                                        ? const Color(0xFF7BA7F7)
+                                        : const Color(0xFFB0B3B8),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${post['likes_count'] ?? 0}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: post['liked_by_me']
+                                          ? const Color(0xFF7BA7F7)
+                                          : const Color(0xFFB0B3B8),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF2F2F7),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.mode_comment_outlined,
+                                size: 18,
+                                color: Color(0xFFB0B3B8),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                post['comments'],
+                                style: const TextStyle(
+                                  color: Color(0xFFB0B3B8),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -746,30 +956,46 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   }
 
   Widget _buildBottomBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      selectedItemColor: const Color(0xFF7BA7F7),
-      unselectedItemColor: const Color(0xFFB0B3B8),
-      selectedLabelStyle: const TextStyle(
-        fontWeight: FontWeight.w700,
-        fontSize: 13,
+    return Container(
+      color: Colors.white,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.025),
+              blurRadius: 4,
+              offset: const Offset(0, -1),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF7BA7F7),
+          unselectedItemColor: const Color(0xFFB0B3B8),
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+          ),
+          iconSize: 26,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.groups), label: '소셜'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.people_alt), label: '커뮤니티'),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
+          ],
+          currentIndex: _bottomIndex,
+          onTap: (idx) {
+            setState(() => _bottomIndex = idx);
+          },
+          elevation: 0,
+        ),
       ),
-      unselectedLabelStyle: const TextStyle(
-        fontWeight: FontWeight.w500,
-        fontSize: 13,
-      ),
-      iconSize: 26,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.groups), label: '소셜'),
-        BottomNavigationBarItem(icon: Icon(Icons.people_alt), label: '커뮤니티'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
-      ],
-      currentIndex: _bottomIndex,
-      onTap: (idx) {
-        setState(() => _bottomIndex = idx);
-      },
-      elevation: 8,
     );
   }
 
@@ -781,18 +1007,24 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         style: const TextStyle(color: Colors.white, fontSize: 10),
       ),
       position: badges.BadgePosition.topEnd(top: -6, end: -6),
-      child: IconButton(
-        icon: const Icon(Icons.notifications_none, color: Color(0xFF7BA7F7)),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const NotificationScreen(),
-            ),
-          ).then((_) {
-            _loadUnreadNotificationCount();
-          });
-        },
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: IconButton(
+          icon: const Icon(Icons.notifications_rounded,
+              size: 28, color: Color(0xFF4B4B5B)),
+          splashRadius: 24,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationScreen(),
+              ),
+            ).then((_) {
+              _loadUnreadNotificationCount();
+            });
+          },
+        ),
       ),
     );
   }
