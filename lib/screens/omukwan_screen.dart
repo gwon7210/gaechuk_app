@@ -241,8 +241,34 @@ class OmukwanScreen extends StatelessWidget {
   }
 }
 
-class FullVerseScreen extends StatelessWidget {
+class FullVerseScreen extends StatefulWidget {
   const FullVerseScreen({Key? key}) : super(key: key);
+
+  @override
+  State<FullVerseScreen> createState() => _FullVerseScreenState();
+}
+
+class _FullVerseScreenState extends State<FullVerseScreen> {
+  double _fontSize = 17.0; // 기본 글자 크기
+  final double _minFontSize = 14.0;
+  final double _maxFontSize = 24.0;
+  final double _fontSizeStep = 1.0;
+
+  void _decreaseFontSize() {
+    if (_fontSize > _minFontSize) {
+      setState(() {
+        _fontSize -= _fontSizeStep;
+      });
+    }
+  }
+
+  void _increaseFontSize() {
+    if (_fontSize < _maxFontSize) {
+      setState(() {
+        _fontSize += _fontSizeStep;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -271,6 +297,25 @@ class FullVerseScreen extends StatelessWidget {
             fontSize: 18,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.remove_circle_outline,
+              color: Color(0xFF7BA7F7),
+              size: 24,
+            ),
+            onPressed: _decreaseFontSize,
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: Color(0xFF7BA7F7),
+              size: 24,
+            ),
+            onPressed: _increaseFontSize,
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       backgroundColor: const Color(0xFFF8F9FF),
       body: SingleChildScrollView(
@@ -321,9 +366,9 @@ class FullVerseScreen extends StatelessWidget {
                 ),
                 child: Text(
                   fullVerse,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    color: Color(0xFF23233A),
+                  style: TextStyle(
+                    fontSize: _fontSize,
+                    color: const Color(0xFF23233A),
                     height: 1.8,
                     letterSpacing: -0.3,
                   ),
