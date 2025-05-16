@@ -6,13 +6,20 @@ import 'dart:io';
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:3000';
   final AuthService _authService = AuthService();
+  bool _isInitialized = false;
+  Future<void>? _initFuture;
 
-  Future<void> initialize() async {
-    await _authService.init();
+  Future<void> _ensureInitialized() {
+    _initFuture ??= _authService.init().then((_) => _isInitialized = true);
+    return _initFuture!;
   }
 
   Map<String, String> get _headers {
+    if (!_isInitialized) {
+      throw Exception('ApiService가 초기화되지 않았습니다.');
+    }
     final token = _authService.getToken();
+    print('[_headers] token: $token');
     return {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
@@ -49,6 +56,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> login(
       String phoneNumber, String password) async {
+    await _ensureInitialized();
     final url = '$baseUrl/auth/login';
     final body = json.encode({
       'phone_number': phoneNumber,
@@ -79,6 +87,7 @@ class ApiService {
     String? churchName,
     String? faithConfession,
   }) async {
+    await _ensureInitialized();
     final url = '$baseUrl/users';
     final body = json.encode({
       'phone_number': phoneNumber,
@@ -107,6 +116,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> post(String path,
       {required Map<String, dynamic> body}) async {
+    await _ensureInitialized();
     final url = '$baseUrl$path';
     final bodyStr = json.encode(body);
 
@@ -132,20 +142,17 @@ class ApiService {
     required Map<String, dynamic> fields,
     required Map<String, http.MultipartFile> files,
   }) async {
+    await _ensureInitialized();
     final url = '$baseUrl$path';
     final request = http.MultipartRequest('POST', Uri.parse(url));
 
-    // 헤더 추가
     request.headers.addAll(_headers);
-    request.headers
-        .remove('Content-Type'); // multipart 요청에서는 Content-Type을 자동으로 설정
+    request.headers.remove('Content-Type');
 
-    // 필드 추가
     fields.forEach((key, value) {
       request.fields[key] = value.toString();
     });
 
-    // 파일 추가
     files.forEach((key, file) {
       request.files.add(file);
     });
@@ -166,6 +173,7 @@ class ApiService {
 
   Future<dynamic> get(String endpoint,
       {Map<String, String>? queryParameters}) async {
+    await _ensureInitialized();
     final url = Uri.parse('$baseUrl$endpoint')
         .replace(queryParameters: queryParameters);
 
@@ -190,6 +198,7 @@ class ApiService {
     int limit = 10,
     String? postType,
   }) async {
+    await _ensureInitialized();
     final queryParams = <String, String>{
       'limit': limit.toString(),
       if (cursor != null) 'cursor': cursor,
@@ -202,10 +211,12 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getMe() async {
+    await _ensureInitialized();
     return await get('/users/me') as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> uploadProfileImage(File imageFile) async {
+    await _ensureInitialized();
     final url = '$baseUrl/users/profile-image';
     final request = http.MultipartRequest('POST', Uri.parse(url));
     request.headers.addAll(_headers);
@@ -226,6 +237,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> delete(String endpoint,
       {Map<String, String>? queryParams}) async {
+    await _ensureInitialized();
     final url =
         Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams);
 
@@ -246,14 +258,17 @@ class ApiService {
   }
 
   Future<void> likePost(String postId) async {
+    await _ensureInitialized();
     await post('/likes/posts/$postId', body: {});
   }
 
   Future<void> unlikePost(String postId) async {
+    await _ensureInitialized();
     await delete('/likes/posts/$postId');
   }
 
   Future<List<dynamic>> getComments(String postId) async {
+    await _ensureInitialized();
     final response = await get('/posts/$postId/comments');
     if (response is List) {
       return response;
@@ -269,6 +284,7 @@ class ApiService {
     required String content,
     String? parentId,
   }) async {
+    await _ensureInitialized();
     final body = {
       'postId': postId,
       'content': content,
@@ -278,17 +294,20 @@ class ApiService {
   }
 
   Future<void> deleteComment(String commentId) async {
+    await _ensureInitialized();
     await delete('/comments/$commentId');
   }
 
   Future<Map<String, dynamic>> getMyOmokwanCountByMonth(
       int year, int month) async {
+    await _ensureInitialized();
     final response =
         await get('/posts/my-omokwan-count-by-month?year=$year&month=$month');
     return response as Map<String, dynamic>;
   }
 
   Future<List<Map<String, dynamic>>> getMyOmokwanByDate(DateTime date) async {
+    await _ensureInitialized();
     final response =
         await get('/posts/my-omokwan-by-date?date=${date.toIso8601String()}');
     if (response is List) {
@@ -297,8 +316,8 @@ class ApiService {
     return [];
   }
 
-  // 알림 목록 조회
   Future<List<Map<String, dynamic>>> getNotifications() async {
+    await _ensureInitialized();
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/notifications'),
@@ -315,9 +334,9 @@ class ApiService {
     }
   }
 
-  // 알림 읽음 처리
   Future<Map<String, dynamic>> markNotificationAsRead(
       String notificationId) async {
+    await _ensureInitialized();
     try {
       final response = await http.patch(
         Uri.parse('$baseUrl/notifications/$notificationId/read'),
@@ -334,8 +353,8 @@ class ApiService {
     }
   }
 
-  // 게시물 상세 정보 조회
   Future<Map<String, dynamic>> getPost(String postId) async {
+    await _ensureInitialized();
     final url = '$baseUrl/posts/$postId';
 
     _logRequest('GET', url, _headers, null);
@@ -359,6 +378,7 @@ class ApiService {
     String? cursor,
     int limit = 10,
   }) async {
+    await _ensureInitialized();
     final queryParams = {
       'keyword': keyword,
       'limit': limit.toString(),

@@ -84,7 +84,12 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/login');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LoginScreen(),
+                    ),
+                  );
                 },
                 child: const Text(
                   '이미 계정이 있나요? 로그인',

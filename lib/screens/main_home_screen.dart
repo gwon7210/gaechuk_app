@@ -9,6 +9,7 @@ import 'notification_screen.dart';
 import 'package:badges/badges.dart' as badges;
 import 'search_screen.dart';
 import 'package:lottie/lottie.dart';
+import 'omukwan_screen.dart';
 
 class MainHomeScreen extends StatefulWidget {
   const MainHomeScreen({Key? key}) : super(key: key);
@@ -52,7 +53,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _initializeAndLoad();
+    _loadPosts();
     _loadUnreadNotificationCount();
 
     _animationController = AnimationController(
@@ -176,32 +177,6 @@ class _MainHomeScreenState extends State<MainHomeScreen>
     }
   }
 
-  Future<void> _initializeServices() async {
-    try {
-      print('Initializing ApiService...');
-      await _apiService.initialize();
-      print('ApiService initialized successfully');
-    } catch (e) {
-      print('Failed to initialize ApiService: $e');
-    }
-  }
-
-  Future<void> _initializeAndLoad() async {
-    try {
-      print('Starting initialization and loading...');
-      await _initializeServices();
-      await _loadPosts();
-      print('Initialization and loading completed');
-    } catch (e) {
-      print('Error during initialization and loading: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('초기화 중 오류가 발생했습니다: $e')),
-        );
-      }
-    }
-  }
-
   Future<void> _loadUnreadNotificationCount() async {
     try {
       final response = await _apiService.get('/notifications/unread-count');
@@ -248,8 +223,10 @@ class _MainHomeScreenState extends State<MainHomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    Widget body;
+    Widget body = const SizedBox.shrink();
     if (_bottomIndex == 0) {
+      body = const OmukwanScreen();
+    } else if (_bottomIndex == 1) {
       body = Column(
         children: [
           // 상단 앱바
@@ -337,8 +314,6 @@ class _MainHomeScreenState extends State<MainHomeScreen>
         ],
       );
     } else if (_bottomIndex == 2) {
-      body = const ProfileScreen();
-    } else {
       body = Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -402,13 +377,15 @@ class _MainHomeScreenState extends State<MainHomeScreen>
           ),
         ),
       );
+    } else if (_bottomIndex == 3) {
+      body = const ProfileScreen();
     }
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(child: body),
       bottomNavigationBar: _buildBottomBar(),
-      floatingActionButton: _bottomIndex == 0
+      floatingActionButton: _bottomIndex == 1
           ? Container(
               height: 240,
               width: 72,
@@ -984,6 +961,8 @@ class _MainHomeScreenState extends State<MainHomeScreen>
           ),
           iconSize: 26,
           items: const [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.emoji_events), label: '오묵완'),
             BottomNavigationBarItem(icon: Icon(Icons.groups), label: '소셜'),
             BottomNavigationBarItem(
                 icon: Icon(Icons.people_alt), label: '커뮤니티'),

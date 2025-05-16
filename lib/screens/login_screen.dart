@@ -1,86 +1,64 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
 import '../services/api_service.dart';
-import 'verification_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
-  final _authService = AuthService();
+  final _passwordController = TextEditingController();
   final _apiService = ApiService();
-  final _auth = FirebaseAuth.instance;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _authService.init();
   }
 
-  Future<void> _sendVerificationCode() async {
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
       try {
-        // 전화번호 형식 변환 (01012345678 -> +821012345678)
-        final phoneNumber = '+82${_phoneController.text.substring(1)}';
-
-        // Firebase 전화번호 인증 요청
-        await _auth.verifyPhoneNumber(
-          phoneNumber: phoneNumber,
-          verificationCompleted: (PhoneAuthCredential credential) async {
-            // 자동 인증 완료 시 (Android에서만 작동)
-            await _auth.signInWithCredential(credential);
-            if (mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VerificationScreen(
-                    phoneNumber: _phoneController.text,
-                    verificationId: credential.verificationId ?? '',
-                  ),
-                ),
-              );
-            }
-          },
-          verificationFailed: (FirebaseAuthException e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('인증번호 전송 실패: ${e.message}')),
-              );
-            }
-          },
-          codeSent: (String verificationId, int? resendToken) {
-            if (mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VerificationScreen(
-                    phoneNumber: _phoneController.text,
-                    verificationId: verificationId,
-                  ),
-                ),
-              );
-            }
-          },
-          codeAutoRetrievalTimeout: (String verificationId) {
-            // 타임아웃 처리
-          },
+        print('로그인 시도: ${_phoneController.text}');
+        final response = await _apiService.login(
+          _phoneController.text,
+          _passwordController.text,
         );
-      } catch (e) {
+        print('로그인 응답: $response');
+
+        final AuthService authService = AuthService();
+        await authService.saveToken(response['access_token']);
+
         if (mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } catch (e) {
+        print('로그인 에러: $e');
+        if (mounted) {
+          String errorMessage = '로그인에 실패했습니다.';
+
+          if (e.toString().contains('401')) {
+            errorMessage = '휴대폰 번호 또는 비밀번호가 올바르지 않습니다.';
+          } else if (e.toString().contains('404')) {
+            errorMessage = '존재하지 않는 계정입니다.';
+          } else if (e.toString().contains('500')) {
+            errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString())),
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       } finally {
@@ -115,63 +93,65 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 24),
                 const Text(
-                  '휴대폰 번호를 입력해주세요',
+                  '로그인',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 28,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF1C1C1E),
                     letterSpacing: -0.5,
                   ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 40),
+                TextFormField(
+                  controller: _phoneController,
+                  decoration: const InputDecoration(
+                    labelText: '휴대폰 번호',
+                    hintText: '01012345678',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return '휴대폰 번호를 입력해주세요';
+                    }
+                    // if (!RegExp(r'^01[0-9]{8,9}\$').hasMatch(value)) {
+                    //   return '올바른 휴대폰 번호를 입력해주세요';
+                    // }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(
+                    labelText: '비밀번호',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return '비밀번호를 입력해주세요';
+                    }
+                    // if (value.length < 6) {
+                    //   return '비밀번호는 6자 이상이어야 합니다';
+                    // }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 32),
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF2F2F7),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextFormField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(
-                      hintText: '휴대폰 번호를 입력해주세요',
-                      hintStyle: TextStyle(
-                        color: Color(0xFF8E8E93),
-                        fontSize: 16,
-                        letterSpacing: -0.3,
-                      ),
-                      prefixText: '+82 ',
-                      prefixStyle: TextStyle(
-                        color: Color(0xFF1C1C1E),
-                        fontSize: 16,
-                        letterSpacing: -0.3,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                    ),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '휴대폰 번호를 입력해주세요';
-                      }
-                      if (value.length < 10) {
-                        return '올바른 휴대폰 번호를 입력해주세요';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const Spacer(),
                 SizedBox(
-                  width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _sendVerificationCode,
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF007AFF),
                       shape: RoundedRectangleBorder(
@@ -180,12 +160,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       elevation: 0,
                     ),
                     child: _isLoading
-                        ? const CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          )
+                        ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
-                            '인증번호 받기',
+                            '로그인',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -195,7 +172,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                   ),
                 ),
-                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -207,6 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _phoneController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 }

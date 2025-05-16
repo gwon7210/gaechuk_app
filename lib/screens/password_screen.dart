@@ -21,14 +21,33 @@ class _PasswordScreenState extends State<PasswordScreen> {
   final _authService = AuthService();
   final _apiService = ApiService();
   bool _isLoading = false;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _authService.init();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    await _authService.init();
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
   }
 
   Future<void> _submit() async {
+    if (!_isInitialized) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('서비스가 초기화되지 않았습니다. 잠시 후 다시 시도해주세요.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -199,7 +218,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submit,
+                    onPressed: _isLoading || !_isInitialized ? null : _submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF007AFF),
                       shape: RoundedRectangleBorder(
