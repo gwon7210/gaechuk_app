@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class OmukwanScreen extends StatelessWidget {
   const OmukwanScreen({Key? key}) : super(key: key);
@@ -19,6 +20,13 @@ class OmukwanScreen extends StatelessWidget {
 9 하나님이 이르시되 천하의 물이 한 곳으로 모이고 뭍이 드러나라 하시니 그대로 되니라
 10 하나님이 뭍을 땅이라 부르시고 모인 물을 바다라 부르시니 하나님이 보시기에 좋았더라''';
 
+    // 현재 날짜와 요일 가져오기
+    final now = DateTime.now();
+    final dateFormat = DateFormat('M월 d일');
+    final weekdayFormat = DateFormat('EEEE', 'ko_KR');
+    final formattedDate = dateFormat.format(now);
+    final formattedWeekday = weekdayFormat.format(now);
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -36,18 +44,72 @@ class OmukwanScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '오묵완',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1C1C1E),
-                    letterSpacing: -0.5,
+                RichText(
+                  text: const TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '오',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF7BA7F7),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '늘의 ',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1C1C1E),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '묵',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF7BA7F7),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '상 ',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1C1C1E),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '완',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF7BA7F7),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '료',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1C1C1E),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.notifications_outlined,
-                      color: Color(0xFF1C1C1E)),
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    color: Color(0xFF1C1C1E),
+                    size: 28,
+                  ),
                   onPressed: () {},
                 ),
               ],
@@ -60,84 +122,79 @@ class OmukwanScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '오늘의 오묵완',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1C1C1E),
-                    letterSpacing: -0.5,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [],
                 ),
                 const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const FullVerseScreen(),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF7BA7F7).withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
-                    );
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF7BA7F7).withOpacity(0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF7BA7F7).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF7BA7F7).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              verseRange,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF7BA7F7),
+                                fontWeight: FontWeight.w600,
                               ),
-                              child: Text(
-                                verseRange,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF7BA7F7),
-                                  fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            verseTitle,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1C1C1E),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            fullVerse.length > 100
+                                ? fullVerse.substring(0, 100) + '...'
+                                : fullVerse,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              color: Color(0xFF23233A),
+                              height: 1.6,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const FullVerseScreen(),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              verseTitle,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1C1C1E),
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              fullVerse.length > 100
-                                  ? fullVerse.substring(0, 100) + '...'
-                                  : fullVerse,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                color: Color(0xFF23233A),
-                                height: 1.6,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Container(
+                              );
+                            },
+                            child: Container(
                               padding: const EdgeInsets.symmetric(
                                   vertical: 12, horizontal: 20),
                               decoration: BoxDecoration(
@@ -164,8 +221,8 @@ class OmukwanScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -207,7 +264,7 @@ class FullVerseScreen extends StatelessWidget {
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF1C1C1E)),
         title: const Text(
-          '오늘의 말씀',
+          '오늘의 묵상',
           style: TextStyle(
             color: Color(0xFF1C1C1E),
             fontWeight: FontWeight.w600,
