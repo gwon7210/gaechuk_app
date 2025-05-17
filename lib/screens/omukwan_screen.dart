@@ -3,8 +3,154 @@ import 'package:intl/intl.dart';
 import 'write_omukwan_screen.dart';
 import 'main_home_screen.dart';
 
-class OmukwanScreen extends StatelessWidget {
+class OmukwanScreen extends StatefulWidget {
   const OmukwanScreen({Key? key}) : super(key: key);
+
+  @override
+  State<OmukwanScreen> createState() => _OmukwanScreenState();
+}
+
+class _OmukwanScreenState extends State<OmukwanScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _opacityAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _showOmukwanInfoModal() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation1, animation2) => Container(),
+      transitionBuilder: (context, animation1, animation2, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation1,
+          curve: Curves.easeOut,
+        );
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
+          child: FadeTransition(
+            opacity:
+                Tween<double>(begin: 0.0, end: 1.0).animate(curvedAnimation),
+            child: Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF7BA7F7).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(
+                                Icons.lightbulb_outline,
+                                color: Color(0xFF7BA7F7),
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const Text(
+                              '오묵완이란?',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1C1C1E),
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1C1C1E).withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Color(0xFF1C1C1E),
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '오묵완은 \'오늘의 묵상 완료\'의 줄임말이에요.\n매일 말씀을 읽고 묵상하면서, 받은 은혜를 함께 나누는 커뮤니티예요.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF1C1C1E),
+                        height: 1.6,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '오묵완에서는 매일 오늘의 말씀을 전해드리지만, 정해진 규칙은 없어요.\n각자 읽고 있는 큐티 말씀을 자유롭게 나눠주시면 됩니다.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF1C1C1E),
+                        height: 1.6,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '그럼, 오늘도 묵상을 완료하러 가볼까요? 🙌',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF7BA7F7),
+                        height: 1.6,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +176,7 @@ class OmukwanScreen extends StatelessWidget {
     final formattedWeekday = weekdayFormat.format(now);
 
     return Container(
+      height: MediaQuery.of(context).size.height,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -37,275 +184,319 @@ class OmukwanScreen extends StatelessWidget {
           colors: [Color(0xFFF8F9FF), Colors.white],
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 페이지 제목
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 40, 24, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                RichText(
-                  text: const TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '오',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF7BA7F7),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '늘의 ',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1C1C1E),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '묵',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF7BA7F7),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '상 ',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1C1C1E),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '완',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF7BA7F7),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '료',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1C1C1E),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.notifications_outlined,
-                    color: Color(0xFF1C1C1E),
-                    size: 28,
-                  ),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          // 상단 말씀 카드
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF7BA7F7).withOpacity(0.1),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF7BA7F7).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              verseRange,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF7BA7F7),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 페이지 제목
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 40, 24, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  RichText(
+                    text: const TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '오',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF7BA7F7),
+                            letterSpacing: -0.5,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            verseTitle,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1C1C1E),
-                              letterSpacing: -0.5,
-                            ),
+                        ),
+                        TextSpan(
+                          text: '늘의 ',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1C1C1E),
+                            letterSpacing: -0.5,
                           ),
-                          const SizedBox(height: 20),
-                          Text(
-                            fullVerse.length > 100
-                                ? fullVerse.substring(0, 100) + '...'
-                                : fullVerse,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              color: Color(0xFF23233A),
-                              height: 1.6,
-                              letterSpacing: -0.3,
-                            ),
+                        ),
+                        TextSpan(
+                          text: '묵',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF7BA7F7),
+                            letterSpacing: -0.5,
                           ),
-                          const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const FullVerseScreen(),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 20),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF7BA7F7).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '전체 말씀 보기',
-                                    style: TextStyle(
-                                      color: Color(0xFF7BA7F7),
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(
-                                    Icons.arrow_forward,
-                                    color: Color(0xFF7BA7F7),
-                                    size: 18,
-                                  ),
-                                ],
-                              ),
-                            ),
+                        ),
+                        TextSpan(
+                          text: '상 ',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1C1C1E),
+                            letterSpacing: -0.5,
                           ),
-                        ],
-                      ),
+                        ),
+                        TextSpan(
+                          text: '완',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF7BA7F7),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '료',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1C1C1E),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 40),
-          // 오묵완 작성 버튼
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF7BA7F7).withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.notifications_outlined,
+                      color: Color(0xFF1C1C1E),
+                      size: 28,
+                    ),
+                    onPressed: () {},
                   ),
                 ],
               ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WriteOmukwanScreen(),
+            ),
+            const SizedBox(height: 32),
+            // 상단 말씀 카드
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 깜빡이는 텍스트
+                  Center(
+                    child: GestureDetector(
+                      onTap: _showOmukwanInfoModal,
+                      child: FadeTransition(
+                        opacity: _opacityAnimation,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF7BA7F7).withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: const Color(0xFF7BA7F7).withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.lightbulb_outline,
+                                color: Color(0xFF7BA7F7),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                '오묵완이 처음이신가요?',
+                                style: TextStyle(
+                                  color: Color(0xFF7BA7F7),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                color: const Color(0xFF7BA7F7).withOpacity(0.6),
+                                size: 12,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    );
-
-                    if (result == true && context.mounted) {
-                      // 소셜 페이지로 이동
-                      Navigator.pushAndRemoveUntil(
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF7BA7F7).withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF7BA7F7).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                verseRange,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF7BA7F7),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              verseTitle,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1C1C1E),
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              fullVerse.length > 100
+                                  ? fullVerse.substring(0, 100) + '...'
+                                  : fullVerse,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                color: Color(0xFF23233A),
+                                height: 1.6,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const FullVerseScreen(),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 20),
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color(0xFF7BA7F7).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '전체 말씀 보기',
+                                      style: TextStyle(
+                                        color: Color(0xFF7BA7F7),
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(
+                                      Icons.arrow_forward,
+                                      color: Color(0xFF7BA7F7),
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
+            // 오묵완 작성 버튼
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF7BA7F7).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              const MainHomeScreen(initialIndex: 1),
+                          builder: (context) => const WriteOmukwanScreen(),
                         ),
-                        (route) => false,
                       );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7BA7F7),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+
+                      if (result == true && context.mounted) {
+                        // 소셜 페이지로 이동
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const MainHomeScreen(initialIndex: 1),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF7BA7F7),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        '오묵완 작성하러 가기',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          letterSpacing: -0.3,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          '오묵완 작성하러 가기',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: -0.3,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ],
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const Expanded(
-            child: SizedBox(),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
