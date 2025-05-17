@@ -19,33 +19,84 @@ class WelcomeScreen extends StatelessWidget {
                 height: 120,
                 width: 120,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F7), // iOS 시스템 그레이
+                  color: const Color(0xFFF2F2F7),
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
                 ),
                 child: const Icon(
-                  Icons.church,
+                  Icons.book,
                   size: 60,
-                  color: Color(0xFF007AFF), // iOS 시스템 블루
+                  color: Color(0xFF007AFF),
                 ),
               ),
               const SizedBox(height: 40),
-              const Text(
-                '개척교회 청년들',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1C1C1E), // iOS 시스템 다크
-                  letterSpacing: -0.5,
+              RichText(
+                text: const TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '오',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF007AFF),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '늘의 ',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1C1C1E),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '묵',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF007AFF),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '상 ',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1C1C1E),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '완',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF007AFF),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '료',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1C1C1E),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
               const Text(
-                '은혜아래서 하나되는\n크리스찬 커뮤니티',
+                '오늘의 묵상을 완료하고\n하나님과 더 가까워지세요',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF8E8E93), // iOS 시스템 그레이
+                  color: Color(0xFF8E8E93),
                   height: 1.5,
                   letterSpacing: -0.3,
                 ),
@@ -64,7 +115,7 @@ class WelcomeScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF007AFF), // iOS 시스템 블루
+                    backgroundColor: const Color(0xFF007AFF),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -95,7 +146,7 @@ class WelcomeScreen extends StatelessWidget {
                   '이미 계정이 있나요? 로그인',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF007AFF), // iOS 시스템 블루
+                    color: Color(0xFF007AFF),
                     letterSpacing: -0.3,
                   ),
                 ),
