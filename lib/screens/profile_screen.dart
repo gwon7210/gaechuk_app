@@ -463,11 +463,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               return Positioned(
                                 bottom: 1,
                                 child: Container(
-                                  width: 4,
-                                  height: 4,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF7BA7F7),
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFF6B6B)
+                                        .withOpacity(0.1),
                                     shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.local_fire_department,
+                                    color: Color(0xFFFF6B6B),
+                                    size: 18,
                                   ),
                                 ),
                               );

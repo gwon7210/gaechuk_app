@@ -13,7 +13,8 @@ import 'omukwan_screen.dart';
 import '../config/env.dart';
 
 class MainHomeScreen extends StatefulWidget {
-  const MainHomeScreen({Key? key}) : super(key: key);
+  final int initialIndex;
+  const MainHomeScreen({Key? key, this.initialIndex = 0}) : super(key: key);
 
   @override
   State<MainHomeScreen> createState() => _MainHomeScreenState();
@@ -53,6 +54,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
   @override
   void initState() {
     super.initState();
+    _bottomIndex = widget.initialIndex;
     _scrollController.addListener(_onScroll);
     _loadPosts();
     _loadUnreadNotificationCount();
