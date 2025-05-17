@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../config/env.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final String postId;
@@ -160,16 +161,21 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              profileImageUrl != null && profileImageUrl.isNotEmpty
-                  ? CircleAvatar(
-                      radius: 16,
-                      backgroundImage: NetworkImage(profileImageUrl),
-                    )
-                  : const CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Color(0xFFB3C7F7),
-                      child: Icon(Icons.person, color: Colors.white, size: 20),
-                    ),
+              CircleAvatar(
+                backgroundColor: const Color(0xFFB3C7F7),
+                backgroundImage: _post?['user']?['profile_image_url'] != null &&
+                        _post!['user']['profile_image_url'].isNotEmpty
+                    ? NetworkImage(
+                        _post!['user']['profile_image_url'].startsWith('/')
+                            ? ApiService.baseUrl +
+                                _post!['user']['profile_image_url']
+                            : _post!['user']['profile_image_url'])
+                    : null,
+                child: _post?['user']?['profile_image_url'] == null ||
+                        _post!['user']['profile_image_url'].isEmpty
+                    ? const Icon(Icons.person, color: Colors.white)
+                    : null,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -326,16 +332,25 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           children: [
                             CircleAvatar(
                               backgroundColor: const Color(0xFFB3C7F7),
-                              backgroundImage:
-                                  _post?['user']?['profile_image_url'] != null
-                                      ? NetworkImage(
-                                          _post!['user']['profile_image_url'])
-                                      : null,
-                              child:
-                                  _post?['user']?['profile_image_url'] == null
-                                      ? const Icon(Icons.person,
-                                          color: Colors.white)
-                                      : null,
+                              backgroundImage: _post?['user']
+                                              ?['profile_image_url'] !=
+                                          null &&
+                                      _post!['user']['profile_image_url']
+                                          .isNotEmpty
+                                  ? NetworkImage(_post!['user']
+                                              ['profile_image_url']
+                                          .startsWith('/')
+                                      ? ApiService.baseUrl +
+                                          _post!['user']['profile_image_url']
+                                      : _post!['user']['profile_image_url'])
+                                  : null,
+                              child: _post?['user']?['profile_image_url'] ==
+                                          null ||
+                                      _post!['user']['profile_image_url']
+                                          .isEmpty
+                                  ? const Icon(Icons.person,
+                                      color: Colors.white)
+                                  : null,
                             ),
                             const SizedBox(width: 12),
                             Column(
@@ -387,7 +402,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.network(
-                              'http://10.0.2.2:3000${_post!['image_url']}',
+                              '${Env.baseUrl}${_post!['image_url']}',
                               fit: BoxFit.cover,
                               width: double.infinity,
                               height: 200,

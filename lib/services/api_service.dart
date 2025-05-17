@@ -2,9 +2,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'auth_service.dart';
 import 'dart:io';
+import '../config/env.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  static String get baseUrl => Env.baseUrl;
   final AuthService _authService = AuthService();
   bool _isInitialized = false;
   Future<void>? _initFuture;

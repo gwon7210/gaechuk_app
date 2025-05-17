@@ -9,11 +9,15 @@ import 'screens/password_screen.dart';
 import 'screens/omukwan_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'config/env.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await initializeDateFormatting('ko_KR', null);
+  const environment =
+      String.fromEnvironment('ENVIRONMENT', defaultValue: 'dev');
+  Env.environment = environment == 'prod' ? Environment.prod : Environment.dev;
   runApp(const MyApp());
 }
 

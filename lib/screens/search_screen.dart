@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'post_detail_screen.dart';
+import '../config/env.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -214,7 +215,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.network(
-                    'http://10.0.2.2:3000$imageUrl',
+                    '${Env.baseUrl}$imageUrl',
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: 200,
