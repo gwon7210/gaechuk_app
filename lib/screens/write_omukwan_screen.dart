@@ -17,6 +17,7 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
   bool _isLoading = false;
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
+  bool _isPrivate = false;
 
   @override
   void dispose() {
@@ -53,19 +54,23 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
       final fields = {
         'content': _contentController.text.trim(),
         'post_type': '오목완',
+        'is_private': _isPrivate,
       };
-      final files = <String, http.MultipartFile>{};
 
       if (_selectedImage != null) {
-        files['image'] =
-            await http.MultipartFile.fromPath('image', _selectedImage!.path);
-      }
+        final file = await http.MultipartFile.fromPath(
+          'image',
+          _selectedImage!.path,
+        );
 
-      await _apiService.postWithImage(
-        '/posts',
-        fields: fields,
-        files: files,
-      );
+        await _apiService.postWithImage(
+          '/posts',
+          fields: fields,
+          files: {'image': file},
+        );
+      } else {
+        await _apiService.post('/posts', body: fields);
+      }
 
       if (mounted) {
         Navigator.pop(context, true);
@@ -160,6 +165,28 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
                   contentPadding: EdgeInsets.all(16),
                 ),
               ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Text(
+                  '나만 보기',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF1C1C1E),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Switch(
+                  value: _isPrivate,
+                  onChanged: (value) {
+                    setState(() {
+                      _isPrivate = value;
+                    });
+                  },
+                  activeColor: const Color(0xFF7BA7F7),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Row(

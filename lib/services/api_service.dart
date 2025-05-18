@@ -151,7 +151,11 @@ class ApiService {
     request.headers.remove('Content-Type');
 
     fields.forEach((key, value) {
-      request.fields[key] = value.toString();
+      if (value is bool) {
+        request.fields[key] = value.toString().toLowerCase();
+      } else {
+        request.fields[key] = value.toString();
+      }
     });
 
     files.forEach((key, file) {
