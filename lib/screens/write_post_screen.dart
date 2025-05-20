@@ -20,7 +20,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
 
-  final List<String> categories = ['전체', '오목완', '말씀나눔', '기도제목', '고민', '교회추천'];
+  final List<String> categories = ['전체', '오묵완', '말씀나눔', '기도제목', '고민', '교회추천'];
 
   @override
   void dispose() {

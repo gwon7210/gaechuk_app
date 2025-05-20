@@ -25,7 +25,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
   int _categoryIndex = 0;
   int _bottomIndex = 0;
   bool _isWriteMenuOpen = false;
-  final List<String> categories = ['전체', '오목완', '말씀나눔', '기도제목', '고민', '교회추천'];
+  final List<String> categories = ['전체', '오묵완', '말씀나눔', '기도제목', '고민', '교회추천'];
   final ApiService _apiService = ApiService();
   final ScrollController _scrollController = ScrollController();
   DateTime? _lastApiCallTime;
@@ -44,7 +44,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
 
   final Map<String, IconData> categoryIcons = {
     '전체': Icons.apps,
-    '오목완': Icons.emoji_events,
+    '오묵완': Icons.emoji_events,
     '말씀나눔': Icons.menu_book,
     '기도제목': Icons.self_improvement,
     '고민': Icons.psychology_alt,
@@ -144,6 +144,10 @@ class _MainHomeScreenState extends State<MainHomeScreen>
             'image_url': post['image_url'],
             'liked_by_me': post['liked_by_me'] ?? false,
             'likes_count': post['likes_count'] ?? 0,
+            'mode': post['mode'],
+            'q1_answer': post['q1_answer'],
+            'q2_answer': post['q2_answer'],
+            'q3_answer': post['q3_answer'],
           };
         }).toList();
 
@@ -209,7 +213,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
 
   Color _categoryColor(String category) {
     switch (category) {
-      case '오목완':
+      case '오묵완':
         return const Color(0xFFB3C7F7); // 하늘색
       case '말씀나눔':
         return const Color(0xFFD1B3F7); // 연보라
@@ -588,6 +592,10 @@ class _MainHomeScreenState extends State<MainHomeScreen>
     final bool expanded = post['expanded'] as bool;
     final String content = post['content'] as String;
     final String? imageUrl = post['image_url'] as String?;
+    final String? mode = post['mode'] as String?;
+    final String? q1Answer = post['q1_answer'] as String?;
+    final String? q2Answer = post['q2_answer'] as String?;
+    final String? q3Answer = post['q3_answer'] as String?;
     final lines = content.split('\n');
     final preview = expanded ? content : lines.take(3).join('\n');
     final isLong = lines.length > 3;
@@ -683,33 +691,56 @@ class _MainHomeScreenState extends State<MainHomeScreen>
                 ],
               ),
               const SizedBox(height: 20),
-              Text(
-                preview,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF23233A),
-                  height: 1.6,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -0.1,
+              if (mode == 'template' && post['category'] == '오묵완') ...[
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (q1Answer != null) ...[
+                      _buildOmukwanAnswer(
+                          '1. 이 말씀을 통해 알게된 하나님은 누구십니까?', q1Answer),
+                      const SizedBox(height: 12),
+                    ],
+                    if (q2Answer != null) ...[
+                      _buildOmukwanAnswer(
+                          '2. 성령님, 이 말씀을 통하여 저에게 무엇을 말씀하시길 원하십니까?', q2Answer),
+                      const SizedBox(height: 12),
+                    ],
+                    if (q3Answer != null) ...[
+                      _buildOmukwanAnswer(
+                          '3. 성령님, 주신 말씀에 따라 제가 구체적으로 어떻게 하기를 원하십니까?',
+                          q3Answer),
+                    ],
+                  ],
                 ),
-              ),
-              if (isLong && !expanded)
-                GestureDetector(
-                  onTap: () => setState(() => posts[idx]['expanded'] = true),
-                  child: const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Text(
-                      '더보기',
-                      style: TextStyle(
-                        color: Color(0xFF7BA7F7),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+              ] else ...[
+                Text(
+                  preview,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF23233A),
+                    height: 1.6,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                if (isLong && !expanded)
+                  GestureDetector(
+                    onTap: () => setState(() => posts[idx]['expanded'] = true),
+                    child: const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text(
+                        '더보기',
+                        style: TextStyle(
+                          color: Color(0xFF7BA7F7),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
+              ],
               if (imageUrl != null) ...[
                 const SizedBox(height: 20),
                 ClipRRect(
@@ -842,6 +873,33 @@ class _MainHomeScreenState extends State<MainHomeScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildOmukwanAnswer(String question, String answer) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          question,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF7BA7F7),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          answer,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Color(0xFF3A3A4A),
+            height: 1.5,
+          ),
+        ),
+      ],
     );
   }
 

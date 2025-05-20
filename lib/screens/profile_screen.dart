@@ -71,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _isLoadingOmokwan = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('오목완을 불러오는데 실패했습니다: $e')),
+          SnackBar(content: Text('오묵완을 불러오는데 실패했습니다: $e')),
         );
       }
     }
@@ -318,37 +318,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                         CrossAxisAlignment
                                                             .start,
                                                     children: [
-                                                      if (omokwan['title'] !=
-                                                          null) ...[
+                                                      if (omokwan['mode'] ==
+                                                          'template') ...[
+                                                        const Text(
+                                                          '오늘 하루 동안 가장 감사한 일은 무엇인가요?',
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color: Color(
+                                                                0xFF8E8E93),
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 4),
                                                         Text(
-                                                          omokwan['title'],
+                                                          omokwan['q1_answer'] ??
+                                                              '',
                                                           style:
                                                               const TextStyle(
-                                                            fontSize: 20,
-                                                            fontWeight:
-                                                                FontWeight.w700,
+                                                            fontSize: 16,
                                                             color: Color(
-                                                                0xFF1C1C1E),
-                                                            letterSpacing: -0.5,
+                                                                0xFF23233A),
+                                                            height: 1.6,
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            letterSpacing: -0.1,
                                                           ),
                                                         ),
                                                         const SizedBox(
                                                             height: 12),
-                                                      ],
-                                                      Text(
-                                                        omokwan['content'] ??
-                                                            '',
-                                                        style: const TextStyle(
-                                                          fontSize: 17,
-                                                          color:
-                                                              Color(0xFF23233A),
-                                                          height: 1.6,
-                                                          letterSpacing: -0.3,
+                                                        const Text(
+                                                          '오늘 하루 동안 가장 힘들었던 일은 무엇인가요?',
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color: Color(
+                                                                0xFF8E8E93),
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
                                                         ),
-                                                        maxLines: 2,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
+                                                        const SizedBox(
+                                                            height: 4),
+                                                        Text(
+                                                          omokwan['q2_answer'] ??
+                                                              '',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 16,
+                                                            color: Color(
+                                                                0xFF23233A),
+                                                            height: 1.6,
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            letterSpacing: -0.1,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 12),
+                                                        const Text(
+                                                          '내일은 어떤 하루가 되길 바라나요?',
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color: Color(
+                                                                0xFF8E8E93),
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 4),
+                                                        Text(
+                                                          omokwan['q3_answer'] ??
+                                                              '',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 16,
+                                                            color: Color(
+                                                                0xFF23233A),
+                                                            height: 1.6,
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            letterSpacing: -0.1,
+                                                          ),
+                                                        ),
+                                                      ] else ...[
+                                                        Text(
+                                                          omokwan['content'] ??
+                                                              '',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 16,
+                                                            color: Color(
+                                                                0xFF23233A),
+                                                            height: 1.6,
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            letterSpacing: -0.1,
+                                                          ),
+                                                        ),
+                                                      ],
                                                       const SizedBox(
                                                           height: 12),
                                                       Text(

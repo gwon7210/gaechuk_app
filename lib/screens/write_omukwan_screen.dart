@@ -13,15 +13,22 @@ class WriteOmukwanScreen extends StatefulWidget {
 
 class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
   final TextEditingController _contentController = TextEditingController();
+  final TextEditingController _q1Controller = TextEditingController();
+  final TextEditingController _q2Controller = TextEditingController();
+  final TextEditingController _q3Controller = TextEditingController();
   final ApiService _apiService = ApiService();
   bool _isLoading = false;
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isPrivate = false;
+  String _mode = 'free'; // 'free' 또는 'template'
 
   @override
   void dispose() {
     _contentController.dispose();
+    _q1Controller.dispose();
+    _q2Controller.dispose();
+    _q3Controller.dispose();
     super.dispose();
   }
 
@@ -41,9 +48,19 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
   }
 
   Future<void> _submitPost() async {
-    if (_contentController.text.trim().isEmpty) {
+    if (_mode == 'free' && _contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('내용을 입력해주세요')),
+      );
+      return;
+    }
+
+    if (_mode == 'template' &&
+        (_q1Controller.text.trim().isEmpty ||
+            _q2Controller.text.trim().isEmpty ||
+            _q3Controller.text.trim().isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('모든 질문에 답변해주세요')),
       );
       return;
     }
@@ -52,10 +69,18 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
 
     try {
       final fields = {
-        'content': _contentController.text.trim(),
-        'post_type': '오목완',
+        'mode': _mode,
         'is_private': _isPrivate,
+        'post_type': '오묵완',
       };
+
+      if (_mode == 'free') {
+        fields['content'] = _contentController.text.trim();
+      } else {
+        fields['q1_answer'] = _q1Controller.text.trim();
+        fields['q2_answer'] = _q2Controller.text.trim();
+        fields['q3_answer'] = _q3Controller.text.trim();
+      }
 
       if (_selectedImage != null) {
         final file = await http.MultipartFile.fromPath(
@@ -140,32 +165,82 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF2F2F7),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextField(
-                controller: _contentController,
-                maxLines: 15,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF1C1C1E),
-                  letterSpacing: -0.3,
-                  height: 1.5,
-                ),
-                decoration: const InputDecoration(
-                  hintText: '오늘 말씀은 어땠나요?',
-                  hintStyle: TextStyle(
-                    color: Color(0xFF8E8E93),
-                    fontSize: 16,
-                    letterSpacing: -0.3,
+            // 모드 선택 버튼
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => _mode = 'free'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _mode == 'free'
+                          ? const Color(0xFF007AFF)
+                          : Colors.grey[200],
+                      foregroundColor:
+                          _mode == 'free' ? Colors.white : Colors.black,
+                    ),
+                    child: const Text('자유 묵상'),
                   ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(16),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => _mode = 'template'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _mode == 'template'
+                          ? const Color(0xFF007AFF)
+                          : Colors.grey[200],
+                      foregroundColor:
+                          _mode == 'template' ? Colors.white : Colors.black,
+                    ),
+                    child: const Text('템플릿 묵상'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_mode == 'free') ...[
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F2F7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TextField(
+                  controller: _contentController,
+                  maxLines: 15,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF1C1C1E),
+                    letterSpacing: -0.3,
+                    height: 1.5,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: '오늘 말씀은 어땠나요?',
+                    hintStyle: TextStyle(
+                      color: Color(0xFF8E8E93),
+                      fontSize: 16,
+                      letterSpacing: -0.3,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(16),
+                  ),
                 ),
               ),
-            ),
+            ] else ...[
+              _buildTemplateQuestion(
+                controller: _q1Controller,
+                question: '이 말씀을 통해 알게된 하나님은 누구십니까?',
+              ),
+              const SizedBox(height: 16),
+              _buildTemplateQuestion(
+                controller: _q2Controller,
+                question: '성령님, 이 말씀을 통하여 저에게 무엇을 말씀하시길 원하십니까?',
+              ),
+              const SizedBox(height: 16),
+              _buildTemplateQuestion(
+                controller: _q3Controller,
+                question: '성령님, 주신 말씀에 따라 제가 구체적으로 어떻게 하기를 원하십니까?',
+              ),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
@@ -216,6 +291,52 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTemplateQuestion({
+    required TextEditingController controller,
+    required String question,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          question,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1C1C1E),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2F2F7),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: controller,
+            maxLines: 5,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF1C1C1E),
+              letterSpacing: -0.3,
+              height: 1.5,
+            ),
+            decoration: const InputDecoration(
+              hintText: '답변을 입력해주세요',
+              hintStyle: TextStyle(
+                color: Color(0xFF8E8E93),
+                fontSize: 16,
+                letterSpacing: -0.3,
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.all(16),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

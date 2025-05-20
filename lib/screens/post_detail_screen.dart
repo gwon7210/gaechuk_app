@@ -389,14 +389,40 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ),
                           const SizedBox(height: 12),
                         ],
-                        Text(
-                          _post?['content'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 15.5,
-                            color: Color(0xFF23233A),
-                            height: 1.7,
+                        if (_post?['mode'] == 'template' &&
+                            _post?['post_type'] == '오묵완') ...[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (_post?['q1_answer'] != null) ...[
+                                _buildOmukwanAnswer(
+                                    '1. 이 말씀을 통해 알게된 하나님은 누구십니까?',
+                                    _post!['q1_answer']),
+                                const SizedBox(height: 16),
+                              ],
+                              if (_post?['q2_answer'] != null) ...[
+                                _buildOmukwanAnswer(
+                                    '2. 성령님, 이 말씀을 통하여 저에게 무엇을 말씀하시길 원하십니까?',
+                                    _post!['q2_answer']),
+                                const SizedBox(height: 16),
+                              ],
+                              if (_post?['q3_answer'] != null) ...[
+                                _buildOmukwanAnswer(
+                                    '3. 성령님, 주신 말씀에 따라 제가 구체적으로 어떻게 하기를 원하십니까?',
+                                    _post!['q3_answer']),
+                              ],
+                            ],
                           ),
-                        ),
+                        ] else ...[
+                          Text(
+                            _post?['content'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 15.5,
+                              color: Color(0xFF23233A),
+                              height: 1.7,
+                            ),
+                          ),
+                        ],
                         if (_post?['image_url'] != null) ...[
                           const SizedBox(height: 16),
                           ClipRRect(
@@ -539,6 +565,31 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildOmukwanAnswer(String question, String answer) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          question,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF7BA7F7),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          answer,
+          style: const TextStyle(
+            fontSize: 15.5,
+            color: Color(0xFF3A3A4A),
+            height: 1.6,
+          ),
+        ),
+      ],
     );
   }
 }
