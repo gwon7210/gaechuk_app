@@ -335,7 +335,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  '곧, 우리를 이어줄 커뮤니티 공간이 열립니다.\n이곳에서 우리는 스크린 너머 서로를 만나,\n다양한 소모임을 통해 함께 대화할 수 있게 될 거예요. ✨',
+                  '곧, 우리를 이어줄 커뮤니티 공간이 열립니다.\n이곳에서 우리는 스크린 너머 서로를 만나,\n다양한 커뮤니티을 통해 함께 대화할 수 있게 될 거예요. ✨',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,

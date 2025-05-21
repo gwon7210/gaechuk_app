@@ -20,7 +20,7 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
   bool _isLoading = false;
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
-  bool _isPrivate = false;
+  String _visibility = 'public'; // 'public', 'group', 'private' 중 하나
   String _mode = 'free'; // 'free' 또는 'template'
 
   @override
@@ -70,7 +70,7 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
     try {
       final fields = {
         'mode': _mode,
-        'is_private': _isPrivate,
+        'visibility': _visibility,
         'post_type': '오묵완',
       };
 
@@ -245,21 +245,36 @@ class _WriteOmukwanScreenState extends State<WriteOmukwanScreen> {
             Row(
               children: [
                 const Text(
-                  '나만 보기',
+                  '공개 설정',
                   style: TextStyle(
                     fontSize: 16,
                     color: Color(0xFF1C1C1E),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Switch(
-                  value: _isPrivate,
+                DropdownButton<String>(
+                  value: _visibility,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'public',
+                      child: Text('전체 공개'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'group',
+                      child: Text('그룹 공개'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'private',
+                      child: Text('나만 보기'),
+                    ),
+                  ],
                   onChanged: (value) {
-                    setState(() {
-                      _isPrivate = value;
-                    });
+                    if (value != null) {
+                      setState(() {
+                        _visibility = value;
+                      });
+                    }
                   },
-                  activeColor: const Color(0xFF7BA7F7),
                 ),
               ],
             ),
