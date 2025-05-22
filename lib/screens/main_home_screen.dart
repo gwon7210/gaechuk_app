@@ -11,6 +11,7 @@ import 'search_screen.dart';
 import 'package:lottie/lottie.dart';
 import 'omukwan_screen.dart';
 import '../config/env.dart';
+import 'group/group_list_screen.dart';
 
 class MainHomeScreen extends StatefulWidget {
   final int initialIndex;
@@ -321,69 +322,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
         ],
       );
     } else if (_bottomIndex == 2) {
-      body = Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 32),
-                const Text(
-                  '🕊️',
-                  style: TextStyle(fontSize: 48),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  '곧, 우리를 이어줄 커뮤니티 공간이 열립니다.\n이곳에서 우리는 스크린 너머 서로를 만나,\n다양한 커뮤니티을 통해 함께 대화할 수 있게 될 거예요. ✨',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF3A3A4A),
-                    height: 1.6,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF2F2F7),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(
-                        Icons.people_alt_outlined,
-                        color: Color(0xFF7BA7F7),
-                        size: 20,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '준비 중입니다',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF7BA7F7),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      body = const GroupListScreen();
     } else if (_bottomIndex == 3) {
       body = const ProfileScreen();
     }
@@ -977,8 +916,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
             BottomNavigationBarItem(
                 icon: Icon(Icons.emoji_events), label: '오묵완'),
             BottomNavigationBarItem(icon: Icon(Icons.groups), label: '소셜'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.people_alt), label: '커뮤니티'),
+            BottomNavigationBarItem(icon: Icon(Icons.people_alt), label: '그룹'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
           ],
           currentIndex: _bottomIndex,
