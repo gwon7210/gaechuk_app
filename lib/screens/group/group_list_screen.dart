@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'create_group_screen.dart';
+import 'group_detail_screen.dart';
 import '../../services/api_service.dart';
 
 class GroupListScreen extends StatefulWidget {
@@ -116,7 +117,15 @@ class _GroupListScreenState extends State<GroupListScreen> {
                                 ),
                                 child: InkWell(
                                   onTap: () {
-                                    // TODO: 그룹 상세 페이지로 이동
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => GroupDetailScreen(
+                                          groupId: group['id'],
+                                          groupTitle: group['title'],
+                                        ),
+                                      ),
+                                    );
                                   },
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(

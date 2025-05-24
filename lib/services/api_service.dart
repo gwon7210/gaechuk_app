@@ -399,6 +399,27 @@ class ApiService {
     return response;
   }
 
+  Future<Map<String, dynamic>> getTodayOmukwans(
+      String groupId, String date) async {
+    await _ensureInitialized();
+    return await get('/groups/$groupId/today-omukwans/$date')
+        as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getTodayOmukwanStatus(
+      String groupId, String date) async {
+    await _ensureInitialized();
+    return await get('/groups/$groupId/today-omukwan-status/$date')
+        as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getUserTodayOmukwans(
+      String groupId, String date, String userId) async {
+    await _ensureInitialized();
+    return await get('/groups/$groupId/today-omukwans/$date/users/$userId')
+        as Map<String, dynamic>;
+  }
+
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.
   // 예: 메일 목록 조회, 메일 상세 조회 등
 }
