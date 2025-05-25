@@ -23,26 +23,46 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
   List<Map<String, dynamic>> _writtenMembers = [];
   List<Map<String, dynamic>> _notWrittenMembers = [];
   bool _isLoading = true;
+  DateTime _selectedDate = DateTime.now();
+  List<Map<String, dynamic>> _members = [];
+  bool _isMembersLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       setState(() {
         _currentTabIndex = _tabController.index;
       });
+      if (_tabController.index == 1) {
+        _loadGroupMembers();
+      }
     });
     _loadTodayOmukwanStatus();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      locale: const Locale('ko'),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+      _loadTodayOmukwanStatus();
+    }
   }
 
   Future<void> _loadTodayOmukwanStatus() async {
     try {
       setState(() => _isLoading = true);
-      final today = DateTime.now();
       final dateStr =
-          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-
+          '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
       final response =
           await _apiService.getTodayOmukwanStatus(widget.groupId, dateStr);
       setState(() {
@@ -64,9 +84,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
 
   Future<void> _loadUserTodayOmukwans(String userId) async {
     try {
-      final today = DateTime.now();
       final dateStr =
-          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+          '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
       final response = await _apiService.getUserTodayOmukwans(
           widget.groupId, dateStr, userId);
       final posts = List<Map<String, dynamic>>.from(response['posts']);
@@ -77,6 +96,28 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
           SnackBar(content: Text('사용자의 오묵완을 불러오는데 실패했습니다: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _loadGroupMembers() async {
+    setState(() {
+      _isMembersLoading = true;
+    });
+    try {
+      final members = await _apiService.getGroupMembers(widget.groupId);
+      setState(() {
+        _members = members;
+        _isMembersLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('멤버 목록을 불러오는데 실패했습니다: $e')),
+        );
+      }
+      setState(() {
+        _isMembersLoading = false;
+      });
     }
   }
 
@@ -116,10 +157,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
               text: '오늘의 오묵완',
             ),
             Tab(
-              icon: Icon(Icons.calendar_today_outlined),
-              text: '지난 오묵완',
-            ),
-            Tab(
               icon: Icon(Icons.people_outline),
               text: '멤버 목록',
             ),
@@ -130,7 +167,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
         controller: _tabController,
         children: [
           _buildTodayOmukwanTab(),
-          _buildPastOmukwanTab(),
           _buildMembersTab(),
         ],
       ),
@@ -151,27 +187,14 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          ..._writtenMembers.map((member) => _buildUserCard(member)),
-          ..._notWrittenMembers.map((member) => _buildNotWrittenCard(member)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPastOmukwanTab() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
+          Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    // TODO: 날짜 선택 다이얼로그 표시
-                  },
+                  onPressed: () => _selectDate(context),
                   icon: const Icon(Icons.calendar_today, size: 18),
-                  label: const Text('날짜 선택'),
+                  label: Text(
+                      '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -182,53 +205,311 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
               ),
             ],
           ),
-        ),
-        const Expanded(
-          child: Center(
-            child: Text(
-              '날짜를 선택해주세요',
-              style: TextStyle(
-                color: Color(0xFF8E8E93),
-                fontSize: 16,
+          const SizedBox(height: 20),
+          ..._writtenMembers.map((member) => _buildUserCard(member)),
+          ..._notWrittenMembers.map((member) => _buildNotWrittenCard(member)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMembersTab() {
+    if (_isMembersLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  _showAddMemberDialog(context);
+                },
+                icon: const Icon(Icons.person_add, size: 20),
+                label: const Text('멤버 추가'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7BA7F7),
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
+        ),
+        Expanded(
+          child: _members.isEmpty
+              ? const Center(child: Text('멤버가 없습니다.'))
+              : ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    ..._members.map((member) => _buildMemberCard({
+                          'id': member['user']['id'],
+                          'nickname': member['user']['nickname'],
+                          'profileImageUrl': member['user']
+                              ['profile_image_url'],
+                          'isCreator': member['is_creator'] ?? false,
+                        })),
+                  ],
+                ),
         ),
       ],
     );
   }
 
-  Widget _buildMembersTab() {
-    // 임시 데이터
-    final List<Map<String, dynamic>> members = [
-      {
-        'id': '1',
-        'nickname': '홍길동',
-        'profileImageUrl': null,
-        'isAdmin': true,
-        'lastWrittenAt': '2024-03-22T09:30:00Z',
-      },
-      {
-        'id': '2',
-        'nickname': '김철수',
-        'profileImageUrl': null,
-        'isAdmin': false,
-        'lastWrittenAt': '2024-03-22T10:15:00Z',
-      },
-      {
-        'id': '3',
-        'nickname': '이영희',
-        'profileImageUrl': null,
-        'isAdmin': false,
-        'lastWrittenAt': '2024-03-21T15:45:00Z',
-      },
-    ];
+  void _showAddMemberDialog(BuildContext context) {
+    final TextEditingController phoneController = TextEditingController();
+    Map<String, dynamic>? searchResult;
+    bool isLoading = false;
 
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        ...members.map((member) => _buildMemberCard(member)),
-      ],
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Color(0xFFF2F2F7),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text(
+                        '멤버 초대',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF3A3A4A),
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Color(0xFF8E8E93)),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: phoneController,
+                          decoration: InputDecoration(
+                            hintText: '전화번호를 입력하세요',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFF2F2F7),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFF2F2F7),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF7BA7F7),
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                          keyboardType: TextInputType.phone,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                if (phoneController.text.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('전화번호를 입력해주세요'),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                setState(() {
+                                  isLoading = true;
+                                });
+
+                                try {
+                                  final result =
+                                      await _apiService.searchUserByPhone(
+                                    phoneController.text,
+                                  );
+                                  setState(() {
+                                    searchResult = result;
+                                    isLoading = false;
+                                  });
+                                } catch (e) {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('사용자를 찾을 수 없습니다: $e'),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7BA7F7),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : const Text('검색'),
+                      ),
+                    ],
+                  ),
+                ),
+                if (searchResult != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      elevation: 2,
+                      color: Colors.white,
+                      shadowColor: const Color(0x1A7BA7F7),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: const Color(0xFFB3C7F7),
+                              backgroundImage:
+                                  searchResult!['profile_image_url'] != null
+                                      ? NetworkImage(
+                                          searchResult!['profile_image_url'])
+                                      : null,
+                              child: searchResult!['profile_image_url'] == null
+                                  ? const Icon(Icons.person,
+                                      color: Colors.white)
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                searchResult!['nickname'] ?? '',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Color(0xFF3A3A4A),
+                                ),
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                try {
+                                  await _apiService.inviteUserToGroup(
+                                    widget.groupId,
+                                    phoneController.text,
+                                  );
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('초대가 완료되었습니다'),
+                                      ),
+                                    );
+                                    _loadGroupMembers();
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('초대에 실패했습니다: $e'),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF7BA7F7),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text('추가'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: 0,
+                    itemBuilder: (context, index) {
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -535,7 +816,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
                           color: Color(0xFF3A3A4A),
                         ),
                       ),
-                      if (member['isAdmin']) ...[
+                      if (member['isCreator'] == true) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -547,7 +828,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
-                            '셀장',
+                            '방장',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF7BA7F7),
@@ -558,18 +839,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
                       ],
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '최근 작성: ${_formatTime(member['lastWrittenAt'] ?? '')}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF8E8E93),
-                    ),
-                  ),
                 ],
               ),
             ),
-            if (member['isAdmin'])
+            if (member['isCreator'] == true)
               IconButton(
                 icon: const Icon(
                   Icons.more_vert,

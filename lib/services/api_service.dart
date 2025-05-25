@@ -323,11 +323,18 @@ class ApiService {
 
   Future<List<Map<String, dynamic>>> getNotifications() async {
     await _ensureInitialized();
+    final url = '$baseUrl/notifications';
+
+    _logRequest('GET', url, _headers, null);
+
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/notifications'),
+        Uri.parse(url),
         headers: _headers,
       );
+
+      _logResponse(response);
+
       if (response.statusCode == 200) {
         return List<Map<String, dynamic>>.from(json.decode(response.body));
       } else {
@@ -418,6 +425,41 @@ class ApiService {
     await _ensureInitialized();
     return await get('/groups/$groupId/today-omukwans/$date/users/$userId')
         as Map<String, dynamic>;
+  }
+
+  // 그룹 멤버 목록 조회
+  Future<List<Map<String, dynamic>>> getGroupMembers(String groupId) async {
+    await _ensureInitialized();
+    final response = await get('/groups/$groupId/members');
+    if (response is List) {
+      return response.cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>> createGroup({
+    required String title,
+    required String description,
+  }) async {
+    await _ensureInitialized();
+    final body = {
+      'title': title,
+      'description': description,
+    };
+    return await post('/groups', body: body);
+  }
+
+  Future<Map<String, dynamic>> searchUserByPhone(String phoneNumber) async {
+    await _ensureInitialized();
+    final response = await get('/users/search/phone/$phoneNumber');
+    return response as Map<String, dynamic>;
+  }
+
+  Future<void> inviteUserToGroup(String groupId, String phoneNumber) async {
+    await _ensureInitialized();
+    await post('/groups/$groupId/invite', body: {
+      'phone_number': phoneNumber,
+    });
   }
 
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.

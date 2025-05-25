@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({Key? key}) : super(key: key);
@@ -19,10 +20,20 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     super.dispose();
   }
 
-  void _createGroup() {
+  void _createGroup() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: API 연동
-      Navigator.pop(context, true);
+      try {
+        final api = ApiService();
+        await api.createGroup(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+        );
+        Navigator.pop(context, true);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('그룹 생성에 실패했습니다: $e')),
+        );
+      }
     }
   }
 
