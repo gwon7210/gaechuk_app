@@ -39,6 +39,52 @@ class _GroupListScreenState extends State<GroupListScreen> {
     }
   }
 
+  Future<void> _leaveGroup(String groupId) async {
+    try {
+      await _apiService.leaveGroup(groupId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('그룹을 탈퇴했습니다.')),
+        );
+        _loadGroups(); // 그룹 목록 새로고침
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('그룹 탈퇴에 실패했습니다: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showLeaveConfirmDialog(Map<String, dynamic> group) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('그룹 탈퇴'),
+          content: Text('${group['title']} 그룹을 탈퇴하시겠습니까?'),
+          actions: [
+            TextButton(
+              child: const Text('취소'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text(
+                '탈퇴',
+                style: TextStyle(color: Colors.red),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _leaveGroup(group['id'].toString());
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,25 +194,106 @@ class _GroupListScreenState extends State<GroupListScreen> {
                                                 ),
                                               ),
                                             ),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFF2F2F7),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                '${group['memberCount']}명',
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                  color: Color(0xFF4B4B5B),
-                                                  fontWeight: FontWeight.w500,
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        const Color(0xFFF2F2F7),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12),
+                                                  ),
+                                                  child: Text(
+                                                    '${group['memberCount']}명',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Color(0xFF4B4B5B),
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
+                                                const SizedBox(width: 8),
+                                                PopupMenuButton<String>(
+                                                  icon: const Icon(
+                                                    Icons.more_vert,
+                                                    color: Color(0xFF8E8E93),
+                                                    size: 20,
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            16),
+                                                  ),
+                                                  elevation: 3,
+                                                  position:
+                                                      PopupMenuPosition.under,
+                                                  itemBuilder:
+                                                      (BuildContext context) =>
+                                                          [
+                                                    PopupMenuItem<String>(
+                                                      value: 'leave',
+                                                      height: 48,
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 8),
+                                                        child: Row(
+                                                          children: [
+                                                            Container(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: const Color(
+                                                                    0xFFFFE5E5),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8),
+                                                              ),
+                                                              child: const Icon(
+                                                                Icons
+                                                                    .exit_to_app,
+                                                                size: 18,
+                                                                color: Color(
+                                                                    0xFFFF3B30),
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 12),
+                                                            const Text(
+                                                              '그룹 탈퇴',
+                                                              style: TextStyle(
+                                                                fontSize: 15,
+                                                                color: Color(
+                                                                    0xFF1C1C1E),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  onSelected: (String value) {
+                                                    if (value == 'leave') {
+                                                      _showLeaveConfirmDialog(
+                                                          group);
+                                                    }
+                                                  },
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),

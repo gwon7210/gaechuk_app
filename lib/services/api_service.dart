@@ -462,6 +462,11 @@ class ApiService {
     });
   }
 
+  Future<void> leaveGroup(String groupId) async {
+    await _ensureInitialized();
+    await delete('/groups/$groupId/leave');
+  }
+
   // 다른 API 요청 메서드들을 여기에 추가할 수 있습니다.
   // 예: 메일 목록 조회, 메일 상세 조회 등
 }
