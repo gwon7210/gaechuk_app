@@ -250,7 +250,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      '소셜',
+                      '나눔',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
@@ -913,9 +913,9 @@ class _MainHomeScreenState extends State<MainHomeScreen>
           ),
           iconSize: 26,
           items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: '오묵완'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.emoji_events), label: '오묵완'),
-            BottomNavigationBarItem(icon: Icon(Icons.groups), label: '소셜'),
+                icon: Icon(Icons.favorite_border), label: '나눔'),
             BottomNavigationBarItem(icon: Icon(Icons.people_alt), label: '그룹'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
           ],
@@ -924,7 +924,7 @@ class _MainHomeScreenState extends State<MainHomeScreen>
             setState(() {
               _bottomIndex = idx;
               if (idx == 1) {
-                // 소셜 페이지로 이동할 때
+                // 나눔 페이지로 이동할 때
                 _loadPosts(refresh: true);
               }
             });
@@ -940,15 +940,29 @@ class _MainHomeScreenState extends State<MainHomeScreen>
       showBadge: _unreadNotificationCount > 0,
       badgeContent: Text(
         _unreadNotificationCount.toString(),
-        style: const TextStyle(color: Colors.white, fontSize: 10),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          height: 1.0,
+        ),
       ),
-      position: badges.BadgePosition.topEnd(top: -6, end: -6),
+      badgeStyle: badges.BadgeStyle(
+        badgeColor: const Color(0xFFFF3B30),
+        padding: const EdgeInsets.all(4),
+        borderRadius: BorderRadius.circular(8),
+        elevation: 0,
+      ),
+      position: badges.BadgePosition.topEnd(top: -2, end: -2),
       child: Material(
         color: Colors.transparent,
         shape: const CircleBorder(),
         child: IconButton(
-          icon: const Icon(Icons.notifications_rounded,
-              size: 28, color: Color(0xFF4B4B5B)),
+          icon: const Icon(
+            Icons.notifications_rounded,
+            size: 26,
+            color: Color(0xFF1C1C1E),
+          ),
           splashRadius: 24,
           onPressed: () {
             Navigator.push(

@@ -62,22 +62,86 @@ class _GroupListScreenState extends State<GroupListScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('그룹 탈퇴'),
-          content: Text('${group['title']} 그룹을 탈퇴하시겠습니까?'),
-          actions: [
-            TextButton(
-              child: const Text('취소'),
-              onPressed: () => Navigator.of(context).pop(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          title: const Text(
+            '그룹 탈퇴',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1C1C1E),
             ),
-            TextButton(
-              child: const Text(
-                '탈퇴',
-                style: TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            '${group['title']} 그룹을 탈퇴하시겠습니까?',
+            style: const TextStyle(
+              fontSize: 15,
+              color: Color(0xFF3A3A4A),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Color(0xFFF2F2F7),
+                    width: 1,
+                  ),
+                ),
               ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _leaveGroup(group['id'].toString());
-              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 44),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(14),
+                        ),
+                      ),
+                    ),
+                    child: const Text(
+                      '취소',
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: Color(0xFF007AFF),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: 1,
+                    color: const Color(0xFFF2F2F7),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _leaveGroup(group['id'].toString());
+                    },
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 44),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(14),
+                        ),
+                      ),
+                    ),
+                    child: const Text(
+                      '탈퇴',
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: Color(0xFFFF3B30),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         );
@@ -229,7 +293,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            16),
+                                                            14),
                                                   ),
                                                   elevation: 3,
                                                   position:
@@ -273,12 +337,12 @@ class _GroupListScreenState extends State<GroupListScreen> {
                                                             const Text(
                                                               '그룹 탈퇴',
                                                               style: TextStyle(
-                                                                fontSize: 15,
+                                                                fontSize: 17,
                                                                 color: Color(
-                                                                    0xFF1C1C1E),
+                                                                    0xFFFF3B30),
                                                                 fontWeight:
                                                                     FontWeight
-                                                                        .w500,
+                                                                        .w400,
                                                               ),
                                                             ),
                                                           ],

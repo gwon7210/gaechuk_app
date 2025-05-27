@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'write_omukwan_screen.dart';
 import 'main_home_screen.dart';
+import '../services/api_service.dart';
+import 'notification_screen.dart';
+import 'package:badges/badges.dart' as badges;
 
 class OmukwanScreen extends StatefulWidget {
   const OmukwanScreen({Key? key}) : super(key: key);
@@ -14,6 +17,8 @@ class _OmukwanScreenState extends State<OmukwanScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
+  final ApiService _apiService = ApiService();
+  int _unreadNotificationCount = 0;
 
   @override
   void initState() {
@@ -29,12 +34,60 @@ class _OmukwanScreenState extends State<OmukwanScreen>
         curve: Curves.easeInOut,
       ),
     );
+    _loadUnreadNotificationCount();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUnreadNotificationCount() async {
+    try {
+      final response = await _apiService.get('/notifications/unread-count');
+      setState(() {
+        _unreadNotificationCount = response['count'] ?? 0;
+      });
+    } catch (e) {
+      // 무시 또는 필요시 에러 처리
+    }
+  }
+
+  Widget _buildNotificationIcon() {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: badges.Badge(
+        showBadge: _unreadNotificationCount > 0,
+        badgeContent: Text(
+          _unreadNotificationCount.toString(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        badgeStyle: const badges.BadgeStyle(
+          badgeColor: Color(0xFFFF3B30),
+          padding: EdgeInsets.all(6),
+        ),
+        child: IconButton(
+          icon: const Icon(Icons.notifications_rounded,
+              size: 28, color: Color(0xFF4B4B5B)),
+          splashRadius: 24,
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationScreen(),
+              ),
+            );
+            _loadUnreadNotificationCount();
+          },
+        ),
+      ),
+    );
   }
 
   void _showOmukwanInfoModal() {
@@ -255,13 +308,10 @@ class _OmukwanScreenState extends State<OmukwanScreen>
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.notifications_outlined,
-                      color: Color(0xFF1C1C1E),
-                      size: 28,
-                    ),
-                    onPressed: () {},
+                  Row(
+                    children: [
+                      _buildNotificationIcon(),
+                    ],
                   ),
                 ],
               ),
@@ -453,7 +503,7 @@ class _OmukwanScreenState extends State<OmukwanScreen>
                       );
 
                       if (result == true && context.mounted) {
-                        // 소셜 페이지로 이동
+                        // 나눔 페이지로 이동
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(

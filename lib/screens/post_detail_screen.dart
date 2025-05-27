@@ -163,16 +163,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             children: [
               CircleAvatar(
                 backgroundColor: const Color(0xFFB3C7F7),
-                backgroundImage: _post?['user']?['profile_image_url'] != null &&
-                        _post!['user']['profile_image_url'].isNotEmpty
-                    ? NetworkImage(
-                        _post!['user']['profile_image_url'].startsWith('/')
-                            ? ApiService.baseUrl +
-                                _post!['user']['profile_image_url']
-                            : _post!['user']['profile_image_url'])
+                backgroundImage: user['profile_image_url'] != null &&
+                        user['profile_image_url'].isNotEmpty
+                    ? NetworkImage(user['profile_image_url'].startsWith('/')
+                        ? ApiService.baseUrl + user['profile_image_url']
+                        : user['profile_image_url'])
                     : null,
-                child: _post?['user']?['profile_image_url'] == null ||
-                        _post!['user']['profile_image_url'].isEmpty
+                child: user['profile_image_url'] == null ||
+                        user['profile_image_url'].isEmpty
                     ? const Icon(Icons.person, color: Colors.white)
                     : null,
               ),

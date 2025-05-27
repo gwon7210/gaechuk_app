@@ -253,43 +253,72 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                     onPressed: () {
                                       showModalBottomSheet(
                                         context: context,
+                                        backgroundColor: Colors.transparent,
                                         builder: (context) {
-                                          return SafeArea(
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                ListTile(
-                                                  leading: const Icon(
-                                                    Icons.delete_outline,
-                                                    color: Colors.red,
-                                                  ),
-                                                  title: const Text(
-                                                    '삭제',
-                                                    style: TextStyle(
-                                                      color: Colors.red,
+                                          return Container(
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFFF9F9F9),
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(16),
+                                                topRight: Radius.circular(16),
+                                              ),
+                                            ),
+                                            child: SafeArea(
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Container(
+                                                    width: 36,
+                                                    height: 5,
+                                                    margin: const EdgeInsets
+                                                        .symmetric(vertical: 8),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                          0xFFD1D1D6),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              2.5),
                                                     ),
                                                   ),
-                                                  onTap: () {
-                                                    Navigator.pop(context);
-                                                    _deleteNotification(
-                                                        notification['id']);
-                                                  },
-                                                ),
-                                                ListTile(
-                                                  leading: const Icon(
-                                                    Icons.close,
-                                                    color: Color(0xFF8E8E93),
-                                                  ),
-                                                  title: const Text(
-                                                    '닫기',
-                                                    style: TextStyle(
-                                                      color: Color(0xFF8E8E93),
+                                                  Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(vertical: 4),
+                                                    child: Column(
+                                                      children: [
+                                                        _buildBottomSheetButton(
+                                                          icon: Icons
+                                                              .delete_outline_rounded,
+                                                          label: '삭제',
+                                                          color: const Color(
+                                                              0xFFE53935),
+                                                          onTap: () {
+                                                            Navigator.pop(
+                                                                context);
+                                                            _deleteNotification(
+                                                                notification[
+                                                                    'id']);
+                                                          },
+                                                        ),
+                                                        const Divider(
+                                                            height: 1,
+                                                            thickness: 0.5,
+                                                            color: Color(
+                                                                0xFFE5E5EA)),
+                                                        _buildBottomSheetButton(
+                                                          icon: Icons
+                                                              .close_rounded,
+                                                          label: '닫기',
+                                                          color: const Color(
+                                                              0xFF1C1C1E),
+                                                          onTap: () =>
+                                                              Navigator.pop(
+                                                                  context),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
-                                                  onTap: () =>
-                                                      Navigator.pop(context),
-                                                ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
                                           );
                                         },
@@ -359,6 +388,43 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     );
                   },
                 ),
+    );
+  }
+
+  Widget _buildBottomSheetButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: color,
+              size: 22,
+              weight: 300,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 16.5,
+                fontWeight: FontWeight.w500,
+                letterSpacing: -0.2,
+                height: 1.0,
+                fontFamily: 'Pretendard',
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

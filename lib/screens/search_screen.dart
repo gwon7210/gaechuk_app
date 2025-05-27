@@ -152,7 +152,10 @@ class _SearchScreenState extends State<SearchScreen> {
                   profileImageUrl != null && profileImageUrl.isNotEmpty
                       ? CircleAvatar(
                           backgroundColor: post['profileColor'],
-                          backgroundImage: NetworkImage(profileImageUrl),
+                          backgroundImage: NetworkImage(
+                              profileImageUrl.startsWith('/')
+                                  ? ApiService.baseUrl + profileImageUrl
+                                  : profileImageUrl),
                           radius: 20,
                         )
                       : CircleAvatar(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final String groupId;
@@ -24,8 +26,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
   List<Map<String, dynamic>> _notWrittenMembers = [];
   bool _isLoading = true;
   DateTime _selectedDate = DateTime.now();
+  DateTime _focusedDay = DateTime.now();
   List<Map<String, dynamic>> _members = [];
   bool _isMembersLoading = false;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
 
   @override
   void initState() {
@@ -43,19 +47,141 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+    showModalBottomSheet(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      locale: const Locale('ko'),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Color(0xFFF2F2F7),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      '날짜 선택',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF3A3A4A),
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Color(0xFF8E8E93)),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TableCalendar(
+                  firstDay: DateTime.utc(2024, 1, 1),
+                  lastDay: DateTime.now(),
+                  focusedDay: _focusedDay,
+                  selectedDayPredicate: (day) {
+                    return isSameDay(_selectedDate, day);
+                  },
+                  onDaySelected: (selectedDay, focusedDay) {
+                    setState(() {
+                      _selectedDate = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
+                    Navigator.pop(context);
+                    _loadTodayOmukwanStatus();
+                  },
+                  calendarFormat: _calendarFormat,
+                  onFormatChanged: (format) {
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                  },
+                  locale: 'ko_KR',
+                  headerStyle: const HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                    titleTextStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1C1C1E),
+                      letterSpacing: -0.5,
+                    ),
+                    leftChevronIcon: Icon(
+                      Icons.chevron_left,
+                      color: Color(0xFF7BA7F7),
+                      size: 28,
+                    ),
+                    rightChevronIcon: Icon(
+                      Icons.chevron_right,
+                      color: Color(0xFF7BA7F7),
+                      size: 28,
+                    ),
+                  ),
+                  calendarStyle: const CalendarStyle(
+                    outsideDaysVisible: false,
+                    weekendTextStyle: TextStyle(
+                      color: Color(0xFF8E8E93),
+                      fontSize: 16,
+                    ),
+                    defaultTextStyle: TextStyle(
+                      color: Color(0xFF1C1C1E),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    selectedDecoration: BoxDecoration(
+                      color: Color(0xFF7BA7F7),
+                      shape: BoxShape.circle,
+                    ),
+                    todayDecoration: BoxDecoration(
+                      color: Color(0xFFF2F2F7),
+                      shape: BoxShape.circle,
+                    ),
+                    selectedTextStyle: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    todayTextStyle: TextStyle(
+                      color: Color(0xFF1C1C1E),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  daysOfWeekStyle: const DaysOfWeekStyle(
+                    weekdayStyle: TextStyle(
+                      color: Color(0xFF8E8E93),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    weekendStyle: TextStyle(
+                      color: Color(0xFF8E8E93),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-      _loadTodayOmukwanStatus();
-    }
   }
 
   Future<void> _loadTodayOmukwanStatus() async {
@@ -514,6 +640,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
   }
 
   Widget _buildUserCard(Map<String, dynamic> member) {
+    String? profileImageUrl = member['profile_image_url'];
+    if (profileImageUrl != null &&
+        profileImageUrl.isNotEmpty &&
+        profileImageUrl.startsWith('/')) {
+      profileImageUrl = ApiService.baseUrl + profileImageUrl;
+    }
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -531,10 +663,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
             children: [
               CircleAvatar(
                 backgroundColor: const Color(0xFFB3C7F7),
-                backgroundImage: member['profile_image_url'] != null
-                    ? NetworkImage(member['profile_image_url'])
+                backgroundImage: profileImageUrl != null
+                    ? NetworkImage(profileImageUrl)
                     : null,
-                child: member['profile_image_url'] == null
+                child: profileImageUrl == null
                     ? const Icon(Icons.person, color: Colors.white)
                     : null,
               ),
@@ -576,6 +708,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
 
   void _showUserPosts(BuildContext context, Map<String, dynamic> user,
       List<Map<String, dynamic>> posts) {
+    String? profileImageUrl = user['profile_image_url'];
+    if (profileImageUrl != null &&
+        profileImageUrl.isNotEmpty &&
+        profileImageUrl.startsWith('/')) {
+      profileImageUrl = ApiService.baseUrl + profileImageUrl;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -605,10 +744,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
                   children: [
                     CircleAvatar(
                       backgroundColor: const Color(0xFFB3C7F7),
-                      backgroundImage: user['profile_image_url'] != null
-                          ? NetworkImage(user['profile_image_url'])
+                      backgroundImage: profileImageUrl != null
+                          ? NetworkImage(profileImageUrl)
                           : null,
-                      child: user['profile_image_url'] == null
+                      child: profileImageUrl == null
                           ? const Icon(Icons.person, color: Colors.white)
                           : null,
                     ),
@@ -734,6 +873,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
   }
 
   Widget _buildNotWrittenCard(Map<String, dynamic> member) {
+    String? profileImageUrl = member['profile_image_url'];
+    if (profileImageUrl != null &&
+        profileImageUrl.isNotEmpty &&
+        profileImageUrl.startsWith('/')) {
+      profileImageUrl = ApiService.baseUrl + profileImageUrl;
+    }
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -748,10 +893,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
           children: [
             CircleAvatar(
               backgroundColor: const Color(0xFFB3C7F7),
-              backgroundImage: member['profile_image_url'] != null
-                  ? NetworkImage(member['profile_image_url'])
+              backgroundImage: profileImageUrl != null
+                  ? NetworkImage(profileImageUrl)
                   : null,
-              child: member['profile_image_url'] == null
+              child: profileImageUrl == null
                   ? const Icon(Icons.person, color: Colors.white)
                   : null,
             ),
@@ -780,6 +925,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
   }
 
   Widget _buildMemberCard(Map<String, dynamic> member) {
+    String? profileImageUrl = member['profileImageUrl'];
+    if (profileImageUrl != null &&
+        profileImageUrl.isNotEmpty &&
+        profileImageUrl.startsWith('/')) {
+      profileImageUrl = ApiService.baseUrl + profileImageUrl;
+    }
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -794,10 +945,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
           children: [
             CircleAvatar(
               backgroundColor: const Color(0xFFB3C7F7),
-              backgroundImage: member['profileImageUrl'] != null
-                  ? NetworkImage(member['profileImageUrl'])
+              backgroundImage: profileImageUrl != null
+                  ? NetworkImage(profileImageUrl)
                   : null,
-              child: member['profileImageUrl'] == null
+              child: profileImageUrl == null
                   ? const Icon(Icons.person, color: Colors.white)
                   : null,
             ),

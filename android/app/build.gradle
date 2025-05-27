@@ -35,7 +35,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace "com.example.gaechuk_app"
+    namespace "com.parkjiwon.omukwan"
     compileSdkVersion flutter.compileSdkVersion
     ndkVersion "27.0.12077973"
 
@@ -53,7 +53,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.gaechuk_app"
+        applicationId "com.parkjiwon.omukwan"
         minSdkVersion 23  // ← 반드시 23으로!
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
